@@ -1,11 +1,38 @@
-body {
+body, main {
   margin: 0;
   display: flex;
   flex-direction: column;
-  place-items: center;
-  min-width: 320px;
+  width: 100vw;
   min-height: 100vh;
   background-color: white;
   font-family: 'Helvetica Rounded', sans-serif;
   font-weight: bold;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1rem;
+  border: 1px solid #ccc;
+}
+
+.left, .right {
+  padding: 10px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.stack.left {
+  align-items: flex-start;
+}
+
+.stack.right {
+  align-items: flex-end;
 }
