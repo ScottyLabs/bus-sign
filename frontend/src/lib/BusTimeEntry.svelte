@@ -3,6 +3,8 @@
   export let location;
   export let time;
   export let busNumber;
+
+  const isApproaching = (value) => value === '&nbsp;' || value === '' || value == null;
 </script>
 
 <div class="rounded-box container">
@@ -16,7 +18,11 @@
   </div>
   <div class="stack right">
     <div class="time">
-      {time} MIN
+      {#if isApproaching(time)}
+        Approaching
+      {:else}
+        {time} MIN
+      {/if}
     </div>
     <div class="bus-number">
       {busNumber}
