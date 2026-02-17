@@ -1,19 +1,68 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import BusTimeEntry from './lib/BusTimeEntry.svelte';
   import QRcode from './assets/QRcode.png';
 
-  let entriesUC = [
-    { route: '61C', location: 'Downtown', time: 2, busNumber: 6767 },
-    { route: '28X', location: 'Airporto', time: 11, busNumber: 1234 },
-    { route: '61D', location: 'Oakland', time: 13, busNumber: 8888 },
-    { route: '61A', location: 'CMU', time: 25, busNumber: 5032 },
-  ];
+  type ApiPrediction = {
+    ETA?: string;
+    location?: string;
+    route?: string;
+    busNumber?: string;
+  };
 
-  let entriesTep = [
-    { route: '28X', location: 'Airporto', time: 11, busNumber: 1234 },
-    { route: '61D', location: 'Oakland', time: 13, busNumber: 8888 },
-    { route: '61C', location: 'Downtown', time: 67, busNumber: 6767 },
-  ];
+  type StopResponse = {
+    stop: string;
+    predictions: ApiPrediction[];
+  };
+
+  type Entry = {
+    route: string;
+    location: string;
+    time: string;
+    busNumber: string;
+  };
+
+  let entriesUC: Entry[] = [];
+  let entriesTep: Entry[] = [];
+
+  const API_BASE = 'http://172.24.148.20:8787'; // change this later, prob to an env
+
+  const toEntries = (predictions: ApiPrediction[]): Entry[] =>
+    predictions.map((prediction) => ({
+      route: prediction.route ?? '',
+      location: prediction.location ?? '',
+      time: prediction.ETA ?? '',
+      busNumber: prediction.busNumber ?? '',
+    }));
+
+  const fetchStop = async (stop: '4407' | '7117'): Promise<Entry[]> => {
+    const response = await fetch(`${API_BASE}/stop?stop=${stop}`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch stop ${stop}: ${response.status}`);
+    }
+
+    const data = (await response.json()) as StopResponse;
+    return toEntries(data.predictions ?? []);
+  };
+
+  const refresh = async () => {
+    try {
+      const [uc, tep] = await Promise.all([fetchStop('7117'), fetchStop('4407')]);
+      entriesUC = uc;
+      entriesTep = tep;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  onMount(() => {
+    void refresh();
+    const interval = setInterval(refresh, 10_000);
+    return () => clearInterval(interval);
+  });
 </script>
 
 <main>
