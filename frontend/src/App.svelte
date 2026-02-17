@@ -1,5 +1,6 @@
 <script lang="ts">
   import BusTimeEntry from './lib/BusTimeEntry.svelte';
+  import QRcode from './assets/QRcode.png';
 </script>
 
 <main>
@@ -22,11 +23,25 @@
       <BusTimeEntry route={'61C'} location={'Downtown'} time={2} busNumber={6767}/>
     </div>
   </div>
+  <div class="footer">
+    <img src={QRcode} alt="QR code" />
+  </div>
 </main>
 
 <style>
   .stack {
     flex: 1 1 0;
     gap: 0.75rem;
+  }
+  .footer {
+    background-color: black;
+    height: 20%;
+  }
+
+  img {
+    width: auto;
+    height: 100%;
+    display: block;
+    margin-left: auto;
   }
 </style>
