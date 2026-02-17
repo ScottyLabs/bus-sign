@@ -1,18 +1,25 @@
+<script>
+  export let route;
+  export let location;
+  export let time;
+  export let busNumber;
+</script>
+
 <div class="rounded-box container">
   <div class="left-stack left">
     <div class="route">
-      61C
+      {route}
     </div>
     <div class="location">
-      To Somewhere
+      To {location.toUpperCase()}
     </div>
   </div>
   <div class="right-stack right">
     <div class="time">
-      2 MIN
+      {time} MIN
     </div>
     <div class="bus-number">
-      6767
+      {busNumber}
     </div>
   </div>
 </div>
