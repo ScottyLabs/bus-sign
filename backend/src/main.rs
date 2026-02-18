@@ -1,5 +1,7 @@
 // BACKEND for CMU bus sign
-// serves data to http://127.0.0.1:3000/predictions
+// serves data to http://{API_HOST}:{API_PORT}/predictions
+// 20-second cache in place to prevent API abuse
+// (only requests from API every 20 seconds)
 
 use axum::{
     Json, Router,
@@ -8,10 +10,12 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
 };
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, env, net::SocketAddr};
+use std::net::{IpAddr, SocketAddr};
+use std::{collections::HashMap, env, sync::Arc};
+use tokio::sync::Mutex;
 use tower_http::cors::{Any, CorsLayer};
 
 // parts of API request URL
@@ -20,10 +24,19 @@ const STOPS: &str = "4407,7117"; // stops to retrieve data from
 const TIME_RES: &str = "s"; // resolution of time data (seconds)
 const FEED_NAME: &str = "Port Authority Bus";
 
+// time between cache refreshes
+const CACHE_DURATION_SECONDS: i64 = 20;
+
 #[derive(Clone)]
 struct AppState {
     api_key: String,
     client: reqwest::Client,
+    cache: Arc<Mutex<Cache>>,
+}
+
+struct Cache {
+    last_update: Option<DateTime<Utc>>,
+    data: FrontendResponse,
 }
 
 enum AppError {
@@ -79,14 +92,14 @@ struct PrtPrediction {
 }
 
 // --- OUTGOING DATA (To Frontend) ---
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 struct RouteGroup {
     route: String,
     destination: String,
     arrivals: Vec<BusArrival>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 struct BusArrival {
     bus_id: String,
     seconds: i64,
@@ -97,17 +110,18 @@ type FrontendResponse = HashMap<String, Vec<RouteGroup>>;
 
 #[tokio::main]
 async fn main() {
-    // load API key from .env
+    // load API key from .env in parent directory
     dotenv().ok();
+
     let api_key = env::var("PRT_API_KEY").expect("PRT_API_KEY must be set in .env");
-    let port: u16 = env::var("API_PORT")
-        .unwrap_or_else(|_| "8080".to_string())
-        .parse()
-        .expect("API_PORT must be a valid port number");
 
     let state = AppState {
         api_key,
         client: reqwest::Client::new(),
+        cache: Arc::new(Mutex::new(Cache {
+            last_update: None,
+            data: HashMap::new(),
+        })),
     };
 
     // cors for security - allow(Any) is fine for this but not best practice (fix before prod)
@@ -118,7 +132,16 @@ async fn main() {
         .layer(cors)
         .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let host: String = env::var("API_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+
+    let ip: IpAddr = host.parse().expect("API_HOST must be a valid IP address");
+
+    let port: u16 = env::var("API_PORT")
+        .unwrap_or_else(|_| "8080".to_string()) // default port 8080 if error
+        .parse()
+        .expect("API_PORT must be a valid port number");
+
+    let addr = SocketAddr::from((ip, port));
     println!("Server started on http://{}/predictions", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
@@ -128,6 +151,18 @@ async fn main() {
 async fn get_predictions(
     State(state): State<AppState>,
 ) -> Result<Json<FrontendResponse>, AppError> {
+    {
+        let cache = state.cache.lock().await;
+        if let Some(last_update) = cache.last_update {
+            let now = Utc::now();
+            if now.signed_duration_since(last_update) < Duration::seconds(CACHE_DURATION_SECONDS) {
+                println!("Returning cached data"); //
+                return Ok(Json(cache.data.clone()));
+            }
+        }
+    }
+
+    println!("Fetching from API");
     let url = format!(
         "{}/getpredictions?key={}&stpid={}&tmres={}&rtpidatafeed={}&format=json",
         BASE_URL, state.api_key, STOPS, TIME_RES, FEED_NAME
@@ -190,6 +225,12 @@ async fn get_predictions(
                 });
             }
         }
+    }
+
+    {
+        let mut cache = state.cache.lock().await;
+        cache.data = output.clone();
+        cache.last_update = Some(Utc::now());
     }
 
     Ok(Json(output))
