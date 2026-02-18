@@ -3,56 +3,48 @@
   import BusTimeEntry from './lib/BusTimeEntry.svelte';
   import QRcode from './assets/QRcode.png';
 
-  type ApiPrediction = {
-    ETA?: string;
-    location?: string;
-    route?: string;
-    busNumber?: string;
-  };
-
-  type StopResponse = {
-    stop: string;
-    predictions: ApiPrediction[];
-  };
-
-  type Entry = {
+  type RouteInformation = {
     route: string;
-    location: string;
-    time: string;
-    busNumber: string;
+    destination: string;
+    arrivals: {
+      bus_id: string;
+      capacity: string;
+      seconds: number;
+    }[];
   };
 
-  let entriesUC: Entry[] = [];
-  let entriesTep: Entry[] = [];
+  type APIResponse = {
+    [stopId: string]: RouteInformation[];
+  };
 
-  const API_BASE = 'http://172.24.148.20:8787'; // change this later, prob to an env
+  let entriesUC: RouteInformation[] = [];
+  let entriesTep: RouteInformation[] = [];
 
-  const toEntries = (predictions: ApiPrediction[]): Entry[] =>
-    predictions.map((prediction) => ({
-      route: prediction.route ?? '',
-      location: prediction.location ?? '',
-      time: prediction.ETA ?? '',
-      busNumber: prediction.busNumber ?? '',
-    }));
+  const API_BASE = 'http://172.24.148.20:8080'; // change this later, prob to an env
 
-  const fetchStop = async (stop: '4407' | '7117'): Promise<Entry[]> => {
-    const response = await fetch(`${API_BASE}/stop?stop=${stop}`, {
+  const fetchPredictions = async (): Promise<APIResponse> => {
+    const response = await fetch(`${API_BASE}/predictions`, {
       cache: 'no-store',
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch stop ${stop}: ${response.status}`);
+      throw new Error(`Failed to fetch predictions: ${response.status}`);
     }
 
-    const data = (await response.json()) as StopResponse;
-    return toEntries(data.predictions ?? []);
+    const data = (await response.json()) as APIResponse;
+    console.log(data);
+    return data;
   };
 
   const refresh = async () => {
     try {
-      const [uc, tep] = await Promise.all([fetchStop('7117'), fetchStop('4407')]);
-      entriesUC = uc;
-      entriesTep = tep;
+      const data = await fetchPredictions();
+      entriesUC = (data['7117'] || []).sort((a, b) =>
+        (a.arrivals[0]?.seconds || Infinity) - (b.arrivals[0]?.seconds || Infinity)
+      );
+      entriesTep = (data['4407'] || []).sort((a, b) =>
+        (a.arrivals[0]?.seconds || Infinity) - (b.arrivals[0]?.seconds || Infinity)
+      );
     } catch (error) {
       console.error(error);
     }
@@ -60,7 +52,7 @@
 
   onMount(() => {
     void refresh();
-    const interval = setInterval(refresh, 10_000);
+    const interval = setInterval(refresh, 3_000);
     return () => clearInterval(interval);
   });
 </script>
@@ -71,20 +63,20 @@
       <div style="font-size: 40px">
         UC Side (Stop 7117)
       </div>
-      {#each entriesUC as entry (entry.busNumber)}
+      {#each entriesUC as entry (entry.route + entry.destination)}
         <BusTimeEntry {...entry} />
       {:else}
-        <BusTimeEntry route={'No Buses Running'} location={''} time={''} busNumber={''}/>
+        <BusTimeEntry route={'No Buses Running'} destination={''} arrivals={[]}/>
       {/each}
     </div>
     <div class="stack left">
       <div style="font-size: 40px">
         Tepper Side (Stop 4407)
       </div>
-      {#each entriesTep as entry (entry.busNumber)}
+      {#each entriesTep as entry (entry.route + entry.destination)}
         <BusTimeEntry {...entry} />
       {:else}
-        <BusTimeEntry route={'No Buses Running'} location={''} time={''} busNumber={''}/>
+        <BusTimeEntry route={'No Buses Running'} destination={''} arrivals={[]}/>
       {/each}
     </div>
   </div>

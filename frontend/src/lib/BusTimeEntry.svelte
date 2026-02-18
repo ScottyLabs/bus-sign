@@ -1,10 +1,21 @@
-<script>
-  export let route;
-  export let location;
-  export let time;
-  export let busNumber;
+<script lang="ts">
+  export let route: string;
+  export let destination: string;
+  export let arrivals: {
+    bus_id: string;
+    capacity: string;
+    seconds: number;
+  }[];
 
-  const isApproaching = (value) => value === '&nbsp;' || value === '' || value == null;
+  const formatTime = (seconds: number): string => {
+    if (seconds < 30) return 'Approaching';
+    const minutes = Math.ceil(seconds / 60);
+    return `${minutes}`;
+  };
+
+  $: nextArrival = arrivals[0];
+  $: timeDisplay = nextArrival ? formatTime(nextArrival.seconds) : 'N/A';
+  $: upcomingTimes = arrivals.slice(1, 3).map(a => formatTime(a.seconds)).join(', ');
 </script>
 
 <div class="rounded-box container">
@@ -12,20 +23,22 @@
     <div class="route">
       {route}
     </div>
-    <div class="location">
-      To {location.toUpperCase()}
+    <div>
+      To {destination.toUpperCase()}
     </div>
   </div>
   <div class="stack right">
     <div class="time">
-      {#if isApproaching(time)}
-        Approaching
+      {#if timeDisplay === 'Approaching'}
+        {timeDisplay}
       {:else}
-        {time} MIN
+        {timeDisplay} MIN
       {/if}
     </div>
-    <div class="bus-number">
-      {busNumber}
+    <div>
+      {#if upcomingTimes.length > 0}
+        Next bus in {upcomingTimes} min
+      {/if}
     </div>
   </div>
 </div>
@@ -33,7 +46,7 @@
 <style>
   .rounded-box {
     border-radius: 16px;
-    padding: 20px;
+    padding: 8px;
     background-color: #f0f0f0;
     border: 1px solid #ccc;
     min-width: 100%;
@@ -47,13 +60,5 @@
 
   .time {
     font-size: 32px;
-  }
-
-  .location {
-
-  }
-
-  .bus-number {
-
   }
 </style>
