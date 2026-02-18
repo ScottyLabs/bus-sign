@@ -1,192 +1,192 @@
+// BACKEND for CMU bus sign
+// serves data to http://127.0.0.1:3000/predictions
+
 use axum::{
-    extract::Query,
+    Json, Router,
+    extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::get,
-    Json, Router,
 };
-use quick_xml::de::from_str;
-use serde::Deserialize;
+use chrono::NaiveDateTime;
+use dotenv::dotenv;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, env, net::SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
-const DEFAULT_URL: &str = "https://truetime.portauthority.org/bustime/eta/getStopPredictionsETA.jsp?agency=&route=all&stop=Port%20Authority%20Bus%3A4407&key=0.6308738799301408";
-const STOP_7117_URL: &str = "https://truetime.portauthority.org/bustime/eta/getStopPredictionsETA.jsp?agency=&route=all&stop=Port%20Authority%20Bus%3A7117&key=0.3685356195902162";
+// parts of API request URL
+const BASE_URL: &str = "http://truetime.portauthority.org/bustime/api/v3";
+const STOPS: &str = "4407,7117"; // stops to retrieve data from
+const TIME_RES: &str = "s"; // resolution of time data (seconds)
+const FEED_NAME: &str = "Port Authority Bus";
 
-#[derive(Debug, Deserialize)]
-#[serde(rename = "stop")]
-struct Stop {
-    #[serde(rename = "pre", default)]
-    predictions: Vec<Prediction>,
+#[derive(Clone)]
+struct AppState {
+    api_key: String,
+    client: reqwest::Client,
 }
 
-#[derive(Debug, Deserialize)]
-struct Prediction {
-    #[serde(rename = "pt")]
-    minutes: Option<String>,
-    #[serde(rename = "pu")]
-    units: Option<String>,
-    #[serde(rename = "fd")]
-    destination: Option<String>,
-    #[serde(rename = "rn")]
-    route_short: Option<String>,
-    #[serde(rename = "rd")]
-    route: Option<String>,
-    #[serde(rename = "nextbusonroutetime")]
-    on_route_time: Option<String>,
-    #[serde(rename = "v")]
-    vehicle_id: Option<String>,
+enum AppError {
+    UpstreamError(reqwest::Error),
+    JsonError(serde_json::Error),
 }
 
-#[derive(Debug, serde::Serialize)]
-struct OutputPrediction {
-    #[serde(rename = "ETA")]
-    eta: Option<String>,
-    #[serde(rename = "location")]
-    location: Option<String>,
-    #[serde(rename = "route")]
-    route: Option<String>,
-    #[serde(rename = "busNumber")]
-    bus_number: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct StopQuery {
-    stop: Option<String>,
-}
-
-#[derive(Debug, serde::Serialize)]
-struct StopResponse {
-    stop: String,
-    predictions: Vec<OutputPrediction>,
-}
-
-#[derive(Debug, Deserialize)]
-struct PredictionsQuery {
-    url: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct FetchQuery {
-    url: Option<String>,
-}
-
-#[derive(Debug)]
-struct ApiError {
-    status: StatusCode,
-    message: String,
-}
-
-impl IntoResponse for ApiError {
+impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        (self.status, self.message).into_response()
+        let (status, error_message) = match self {
+            AppError::UpstreamError(e) => {
+                (StatusCode::BAD_GATEWAY, format!("API Connect Error: {}", e))
+            }
+            AppError::JsonError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("API Parse Error: {}", e),
+            ),
+        };
+        (status, Json(serde_json::json!({ "error": error_message }))).into_response()
     }
 }
 
+// --- INCOMING DATA (From API) ---
+#[derive(Deserialize, Debug)]
+struct PrtResponse {
+    #[serde(rename = "bustime-response")]
+    response: PrtBody,
+}
+
+#[derive(Deserialize, Debug)]
+struct PrtBody {
+    #[serde(rename = "prd", default)]
+    predictions: Option<Vec<PrtPrediction>>,
+    #[serde(rename = "error", default)]
+    api_error: Option<Vec<PrtError>>,
+}
+
+#[derive(Deserialize, Debug)]
+struct PrtError {
+    msg: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct PrtPrediction {
+    rt: String,
+    des: String,
+    stpid: String,
+    vid: String,
+    tmstmp: String,
+    prdtm: String,
+    #[serde(default)]
+    psgld: String,
+}
+
+// --- OUTGOING DATA (To Frontend) ---
+#[derive(Serialize, Debug)]
+struct RouteGroup {
+    route: String,
+    destination: String,
+    arrivals: Vec<BusArrival>,
+}
+
+#[derive(Serialize, Debug)]
+struct BusArrival {
+    bus_id: String,
+    seconds: i64,
+    capacity: String,
+}
+
+type FrontendResponse = HashMap<String, Vec<RouteGroup>>;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() {
+    // load API key from .env
+    dotenv().ok();
+    let api_key = env::var("PRT_API_KEY").expect("PRT_API_KEY must be set in .env");
+
+    let state = AppState {
+        api_key,
+        client: reqwest::Client::new(),
+    };
+
+    // cors for security - allow(Any) is fine for this but not best practice (fix before prod)
+    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any);
+
     let app = Router::new()
         .route("/predictions", get(get_predictions))
-        .route("/fetch", get(fetch_raw))
-        .route("/stop", get(get_stop))
-        .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any));
+        .layer(cors)
+        .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8787").await?;
-    axum::serve(listener, app).await?;
-    Ok(())
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("Server started on http://{}/predictions", addr);
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn get_predictions(
-    Query(query): Query<PredictionsQuery>,
-) -> Result<Json<Vec<OutputPrediction>>, ApiError> {
-    let url = query.url.unwrap_or_else(|| DEFAULT_URL.to_string());
-    let body = reqwest::get(url)
+    State(state): State<AppState>,
+) -> Result<Json<FrontendResponse>, AppError> {
+    let url = format!(
+        "{}/getpredictions?key={}&stpid={}&tmres={}&rtpidatafeed={}&format=json",
+        BASE_URL, state.api_key, STOPS, TIME_RES, FEED_NAME
+    );
+
+    let resp = state
+        .client
+        .get(&url)
+        .send()
         .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: format!("request failed: {err}"),
-        })?
-        .text()
-        .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: format!("read body failed: {err}"),
-        })?;
+        .map_err(AppError::UpstreamError)?;
 
-    let stop: Stop = from_str(&body).map_err(|err| ApiError {
-        status: StatusCode::BAD_GATEWAY,
-        message: format!("parse failed: {err}"),
-    })?;
-    Ok(Json(to_output_predictions(stop.predictions)))
-}
+    let raw_text = resp.text().await.map_err(AppError::UpstreamError)?;
+    let clean_text = raw_text.replace(r"\", "/");
+    let prt_data: PrtResponse = serde_json::from_str(&clean_text).map_err(AppError::JsonError)?;
 
-async fn fetch_raw(Query(query): Query<FetchQuery>) -> Result<Response, ApiError> {
-    let url = query.url.ok_or_else(|| ApiError {
-        status: StatusCode::BAD_REQUEST,
-        message: "missing url query parameter".to_string(),
-    })?;
-
-    let body = reqwest::get(url)
-        .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: format!("request failed: {err}"),
-        })?
-        .text()
-        .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: format!("read body failed: {err}"),
-        })?;
-
-    Ok((StatusCode::OK, body).into_response())
-}
-
-async fn get_stop(Query(query): Query<StopQuery>) -> Result<Json<StopResponse>, ApiError> {
-    let stop = query.stop.unwrap_or_else(|| "4407".to_string());
-
-    let url = match stop.as_str() {
-        "4407" => DEFAULT_URL,
-        "7117" => STOP_7117_URL,
-        _ => {
-            return Err(ApiError {
-                status: StatusCode::BAD_REQUEST,
-                message: "unsupported stop; use 4407 or 7117".to_string(),
-            })
+    if let Some(errors) = prt_data.response.api_error {
+        for err in errors {
+            println!("PRT API Error Message: {}", err.msg);
         }
-    };
+        return Ok(Json(HashMap::new()));
+    }
 
-    let body = reqwest::get(url)
-        .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: format!("request failed: {err}"),
-        })?
-        .text()
-        .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: format!("read body failed: {err}"),
-        })?;
+    let mut output: FrontendResponse = HashMap::new();
 
-    let stop_data: Stop = from_str(&body).map_err(|err| ApiError {
-        status: StatusCode::BAD_GATEWAY,
-        message: format!("parse failed: {err}"),
-    })?;
+    if let Some(predictions) = prt_data.response.predictions {
+        // handle API data
+        for p in predictions.into_iter() {
+            let format = "%Y%m%d %H:%M:%S";
+            let seconds_left = match (
+                NaiveDateTime::parse_from_str(&p.tmstmp, format),
+                NaiveDateTime::parse_from_str(&p.prdtm, format),
+            ) {
+                (Ok(s), Ok(a)) => a.signed_duration_since(s).num_seconds(),
+                _ => continue, // skip this iteration if bad time data
+                               // TODO: add some kind of internal warning here
+            };
 
-    Ok(Json(StopResponse {
-        stop,
-        predictions: to_output_predictions(stop_data.predictions),
-    }))
-}
+            let stop_list = output.entry(p.stpid).or_default();
 
-fn to_output_predictions(predictions: Vec<Prediction>) -> Vec<OutputPrediction> {
-    predictions
-        .into_iter()
-        .map(|prediction| OutputPrediction {
-            eta: prediction.minutes,
-            location: prediction.destination,
-            route: prediction.route_short,
-            bus_number: prediction.vehicle_id,
-        })
-        .collect()
+            // data for each bus
+            let arrival = BusArrival {
+                bus_id: p.vid,
+                seconds: seconds_left,
+                capacity: p.psgld,
+            };
+
+            // if stop data already exists, update it; otherwise, make new
+            if let Some(group) = stop_list
+                .iter_mut()
+                .find(|g| g.route == p.rt && g.destination == p.des)
+            {
+                group.arrivals.push(arrival);
+                group.arrivals.sort_by_key(|b| b.seconds);
+            } else {
+                stop_list.push(RouteGroup {
+                    route: p.rt,
+                    destination: p.des,
+                    arrivals: vec![arrival],
+                });
+            }
+        }
+    }
+
+    Ok(Json(output))
 }
