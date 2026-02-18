@@ -20,7 +20,9 @@
   let entriesUC: RouteInformation[] = [];
   let entriesTep: RouteInformation[] = [];
 
-  const API_BASE = 'http://172.24.148.20:8080'; // change this later, prob to an env
+  const API_HOST = import.meta.env.API_HOST || 'localhost';
+  const API_PORT = import.meta.env.API_PORT || '8080';
+  const API_BASE = `http://${API_HOST}:${API_PORT}`;
 
   const fetchPredictions = async (): Promise<APIResponse> => {
     const response = await fetch(`${API_BASE}/predictions`, {

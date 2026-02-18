@@ -100,6 +100,10 @@ async fn main() {
     // load API key from .env
     dotenv().ok();
     let api_key = env::var("PRT_API_KEY").expect("PRT_API_KEY must be set in .env");
+    let port: u16 = env::var("API_PORT")
+        .unwrap_or_else(|_| "8080".to_string())
+        .parse()
+        .expect("API_PORT must be a valid port number");
 
     let state = AppState {
         api_key,
@@ -114,7 +118,7 @@ async fn main() {
         .layer(cors)
         .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     println!("Server started on http://{}/predictions", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
