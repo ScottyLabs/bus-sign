@@ -155,9 +155,26 @@ async fn get_predictions(
         let cache = state.cache.lock().await;
         if let Some(last_update) = cache.last_update {
             let now = Utc::now();
-            if now.signed_duration_since(last_update) < Duration::seconds(CACHE_DURATION_SECONDS) {
-                println!("Returning cached data"); //
-                return Ok(Json(cache.data.clone()));
+            let elapsed = now.signed_duration_since(last_update);
+            if elapsed < Duration::seconds(CACHE_DURATION_SECONDS) {
+                println!("Returning cached data");
+
+                let mut response_data = cache.data.clone();
+
+                let elapsed_seconds = elapsed.num_seconds();
+
+                // if pulling from cache, linearly decreases predicted times according to real time elapsed
+                for route_groups in response_data.values_mut() {
+                    for group in route_groups {
+                        for arrival in &mut group.arrivals {
+                            if arrival.seconds > 30 {
+                                arrival.seconds -= elapsed_seconds;
+                            }
+                        }
+                    }
+                }
+
+                return Ok(Json(response_data));
             }
         }
     }
