@@ -46,7 +46,7 @@
 <style>
   .rounded-box {
     border-radius: 16px;
-    padding: 8px;
+    padding: 2px;
     background-color: #f0f0f0;
     border: 1px solid #ccc;
     min-width: 100%;

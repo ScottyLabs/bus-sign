@@ -20,8 +20,8 @@
   let entriesUC: RouteInformation[] = [];
   let entriesTep: RouteInformation[] = [];
 
-  const API_HOST = import.meta.env.API_HOST || 'localhost';
-  const API_PORT = import.meta.env.API_PORT || '8080';
+  const API_HOST = import.meta.env.VITE_API_HOST || 'localhost';
+  const API_PORT = import.meta.env.VITE_API_PORT || '8080';
   const API_BASE = `http://${API_HOST}:${API_PORT}`;
 
   const fetchPredictions = async (): Promise<APIResponse> => {
@@ -34,7 +34,6 @@
     }
 
     const data = (await response.json()) as APIResponse;
-    console.log(data);
     return data;
   };
 
