@@ -81,6 +81,7 @@
       {/each}
     </div>
   </div>
+  <p class="disclaimer">Data provided under license from PRT; this application is not officially endorsed by Pittsburgh Regional Transit.</p>
   <div class="footer">
     <img src={QRcode} alt="QR code" />
   </div>
