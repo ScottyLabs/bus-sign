@@ -23,6 +23,9 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
 
+      - name: Install bun2nix
+        run: bun install -g bun2nix
+
       - name: Install dependencies
         run: bun install
 
