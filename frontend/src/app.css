@@ -46,9 +46,3 @@ main {
 .stack.right {
   align-items: flex-end;
 }
-
-.disclaimer {
-  font-weight: normal;
-  color: gray;
-  padding-left: 20px;
-}

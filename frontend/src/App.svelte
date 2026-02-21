@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import BusTimeEntry from './lib/BusTimeEntry.svelte';
-  import QRcode from './assets/QRcode.png';
 
   type RouteInformation = {
     route: string;
@@ -82,9 +81,6 @@
     </div>
   </div>
   <p class="disclaimer">Data provided under license from PRT; this application is not officially endorsed by Pittsburgh Regional Transit.</p>
-  <div class="footer">
-    <img src={QRcode} alt="QR code" />
-  </div>
 </main>
 
 <style>
@@ -92,15 +88,10 @@
     flex: 1 1 0;
     gap: 0.75rem;
   }
-  .footer {
-    background-color: black;
-    height: 20%;
-  }
 
-  img {
-    width: auto;
-    height: 100%;
-    display: block;
-    margin-left: auto;
+  .disclaimer {
+    font-weight: normal;
+    color: gray;
+    padding-left: 20px;
   }
 </style>
