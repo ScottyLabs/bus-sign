@@ -42,11 +42,11 @@
 
             busSignApp = b2n.mkDerivation {
               pname = "bus-sign-app";
-              version = (builtins.fromJSON (builtins.readFile ./app/package.json)).version;
-              src = ./app;
+              version = (builtins.fromJSON (builtins.readFile ./frontend/package.json)).version;
+              src = ./frontend;
 
               bunDeps = b2n.fetchBunDeps {
-                bunNix = ./app/bun.nix;
+                bunNix = ./frontend/bun.nix;
               };
 
               buildPhase = ''
@@ -59,7 +59,6 @@
               '';
             };
 
-            cargoNix = pkgs.callPackage ./Cargo.nix { };
           in
           {
             inherit busSignApp;
