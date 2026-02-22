@@ -54,7 +54,7 @@
               '';
             };
 
-            cargoNix = pkgs.callPackage ./backend/Cargo.nix { };
+            cargoNix = pkgs.callPackage ./Cargo.nix { };
 
             busSignBackend = cargoNix.rootCrate.build;
 
