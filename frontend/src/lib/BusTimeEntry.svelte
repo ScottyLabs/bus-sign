@@ -13,6 +13,7 @@
         "61C": "#2ecc71",
         "61D": "#f39c12",
         "67": "#9b59b6",
+        "69": "#9b59b6",
         "58": "#1abc9c",
     };
 
@@ -47,10 +48,10 @@
             {route}
         </div>
         <div>
-            To {destination.toUpperCase()}
             {#if capacity}
-                <span class="capacity">({capacity.label})</span>
+                <div class="capacity">({capacity.label})</div>
             {/if}
+            To {destination.toUpperCase()}
         </div>
     </div>
     <div class="stack right">
@@ -101,7 +102,7 @@
     }
 
     .capacity {
-        font-style: italic;
         font-weight: normal;
+        margin-bottom: 0.5rem;
     }
 </style>
