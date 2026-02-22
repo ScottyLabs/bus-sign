@@ -18,6 +18,7 @@
 
     let entriesUC: RouteInformation[] = [];
     let entriesTep: RouteInformation[] = [];
+    let lastUpdated: Date | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -47,10 +48,19 @@
                     (a.arrivals[0]?.seconds || Infinity) -
                     (b.arrivals[0]?.seconds || Infinity),
             );
+            lastUpdated = new Date();
         } catch (error) {
             console.error(error);
         }
     };
+
+    $: formattedTime = lastUpdated
+        ? lastUpdated.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              second: "2-digit",
+          })
+        : "";
 
     onMount(() => {
         void refresh();
@@ -89,10 +99,15 @@
             {/each}
         </div>
     </div>
-    <p class="disclaimer">
-        Data provided under license from PRT; this application is not officially
-        endorsed by Pittsburgh Regional Transit.
-    </p>
+    <div class="footer">
+        <p class="disclaimer">
+            Data provided under license from PRT; this application is not
+            officially endorsed by Pittsburgh Regional Transit.
+        </p>
+        {#if formattedTime}
+            <p class="last-updated">Last updated: {formattedTime}</p>
+        {/if}
+    </div>
 </main>
 
 <style>
@@ -105,5 +120,18 @@
         font-weight: normal;
         color: gray;
         padding-left: 20px;
+    }
+
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .last-updated {
+        font-weight: normal;
+        color: gray;
+        font-size: 14px;
+        padding-right: 20px;
     }
 </style>
