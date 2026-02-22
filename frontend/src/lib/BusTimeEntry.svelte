@@ -86,12 +86,6 @@
         font-size: 40px;
     }
 
-    .time-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
     .time {
         font-size: 32px;
     }
