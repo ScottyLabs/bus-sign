@@ -102,7 +102,7 @@
             {/each}
         </div>
     </div>
-    <div class="footer">
+    <footer class="footer">
         <div class="stack footer-text">
             <p class="attribution">
                 Project by Undergraduate Student Senate via collaboration with ScottyLabs.<br>
@@ -116,7 +116,7 @@
         {#if formattedTime}
             <p class="last-updated">Last updated: {formattedTime}</p>
         {/if}
-    </div>
+    </footer>
 </main>
 
 <style>
@@ -153,9 +153,16 @@
     }
 
     .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        border: 1px solid #ccc;
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
+        z-index: 1000;
     }
 
     .last-updated {
