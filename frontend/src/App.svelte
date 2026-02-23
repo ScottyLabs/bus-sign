@@ -52,8 +52,8 @@
                     (b.arrivals[0]?.seconds || Infinity),
             );
             lastUpdated = new Date();
-            paddingX = Math.max(entriesUC.length, entriesTep.length) <= 6 ? 16 : 4;
-            paddingY = Math.max(entriesUC.length, entriesTep.length) <= 6 ? 12 : 3;
+            paddingX = Math.max(entriesUC.length, entriesTep.length) <= 5 ? 16 : 4;
+            paddingY = Math.max(entriesUC.length, entriesTep.length) <= 5 ? 12 : 3;
         } catch (error) {
             console.error(error);
         }
