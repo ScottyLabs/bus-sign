@@ -20,6 +20,9 @@
     let entriesTep: RouteInformation[] = [];
     let lastUpdated: Date | null = null;
 
+    let paddingX: number = 4;
+    let paddingY: number = 3;
+
     const API_BASE = import.meta.env.VITE_API_BASE || "";
 
     const fetchPredictions = async (): Promise<APIResponse> => {
@@ -49,6 +52,8 @@
                     (b.arrivals[0]?.seconds || Infinity),
             );
             lastUpdated = new Date();
+            paddingX = Math.max(entriesUC.length, entriesTep.length) <= 6 ? 16 : 4;
+            paddingY = Math.max(entriesUC.length, entriesTep.length) <= 6 ? 12 : 3;
         } catch (error) {
             console.error(error);
         }
@@ -80,7 +85,7 @@
         <div class="stack left">
             <div style="font-size: 40px">UC Side (Stop 7117)</div>
             {#each entriesUC as entry (entry.route + entry.destination)}
-                <BusTimeEntry {...entry} />
+                <BusTimeEntry {...entry} {paddingX} {paddingY} />
             {:else}
                 <BusTimeEntry
                     route={"No Buses Running"}
@@ -92,7 +97,7 @@
         <div class="stack left">
             <div style="font-size: 40px">Tepper Side (Stop 4407)</div>
             {#each entriesTep as entry (entry.route + entry.destination)}
-                <BusTimeEntry {...entry} />
+                <BusTimeEntry {...entry} {paddingX} {paddingY} />
             {:else}
                 <BusTimeEntry
                     route={"No Buses Running"}

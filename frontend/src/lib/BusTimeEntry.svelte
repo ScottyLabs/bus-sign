@@ -6,6 +6,8 @@
         capacity: string;
         seconds: number;
     }[];
+    export let paddingX: number; // padding along left-right
+    export let paddingY: number; // padding along up-down
 
     const routeColors: Record<string, string> = {
         "61A": "#e74c3c",
@@ -42,7 +44,7 @@
         : null;
 </script>
 
-<div class="rounded-box container">
+<div class="rounded-box container" style="padding: {paddingY}px {paddingX}px">
     <div class="stack left">
         <div class="route" style="color: {badgeColor}">
             {route}
@@ -73,7 +75,6 @@
 <style>
     .rounded-box {
         border-radius: 12px;
-        padding: 3px 4px;
         background-color: #f5f5f5;
         border: 1px solid #e0e0e0;
         min-width: 100%;
