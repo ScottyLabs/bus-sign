@@ -91,8 +91,8 @@
                     route={"No Buses Running"}
                     destination={""}
                     arrivals={[]}
-                    paddingX=16
-                    paddingY=12
+                    paddingX={16}
+                    paddingY={12}
                 />
             {/each}
         </div>
@@ -105,8 +105,8 @@
                     route={"No Buses Running"}
                     destination={""}
                     arrivals={[]}
-                    paddingX=16
-                    paddingY=12
+                    paddingX={16}
+                    paddingY={12}
                 />
             {/each}
         </div>
