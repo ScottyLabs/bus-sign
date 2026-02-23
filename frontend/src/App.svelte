@@ -70,6 +70,9 @@
 </script>
 
 <main>
+    <div class="header">
+        Live PRT Bus Arrivals (Forbes and Morewood)
+    </div>
     <div
         class="container"
         style="justify-content: start; align-items: flex-start"
@@ -100,10 +103,16 @@
         </div>
     </div>
     <div class="footer">
-        <p class="disclaimer">
-            Data provided under license from PRT; this application is not
-            officially endorsed by Pittsburgh Regional Transit.
-        </p>
+        <div class="stack footer-text">
+            <p class="attribution">
+                Project by Undergraduate Student Senate via collaboration with ScottyLabs.<br>
+                Funded in part by your Student Activities Fee.
+            </p>
+            <p class="disclaimer">
+                Data provided under license from PRT; this application is not
+                officially endorsed by Pittsburgh Regional Transit.
+            </p>
+        </div>
         {#if formattedTime}
             <p class="last-updated">Last updated: {formattedTime}</p>
         {/if}
@@ -116,16 +125,37 @@
         gap: 0.75rem;
     }
 
+    .attribution {
+        font-weight: bold;
+        font-size: 40px;
+        color: black;
+        padding-left: 20px;
+        margin: 0;
+    }
+
     .disclaimer {
         font-weight: normal;
         color: gray;
         padding-left: 20px;
+        margin: 0;
+    }
+
+    .footer-text {
+        gap: 0;
+        padding: 0.25rem 0;
+    }
+
+    .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 80px;
     }
 
     .footer {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-end;
     }
 
     .last-updated {
