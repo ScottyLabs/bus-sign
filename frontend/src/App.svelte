@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import BusTimeEntry from "./lib/BusTimeEntry.svelte";
-    import Maintenance from "./lib/Maintenance.svelte";
 
     type RouteInformation = {
         route: string;
@@ -76,7 +75,6 @@
 </script>
 
 <main>
-    <Maintenance />
     <div class="header">
         Live PRT Bus Arrivals (Forbes and Morewood)
     </div>
