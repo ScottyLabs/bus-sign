@@ -227,6 +227,13 @@ async fn get_predictions(
         for err in errors {
             println!("PRT API Error Message: {}", err.msg);
         }
+
+        {
+            let mut cache = state.cache.lock().await;
+            cache.data = HashMap::new();
+            cache.last_update = Some(Utc::now());
+        }
+
         return Ok(Json(HashMap::new()));
     }
 
