@@ -7,22 +7,21 @@
 
 ## Setup
 ### Setting up your environment variables
-```
+```bash
 # Copy env variables from .env.example
 $ cp .env.example .env
 
 # Add your PRT_API_KEY to the .env file
 ```
 ### Running the backend
-```
+```bash
 $ cd backend
 
 # Install dependencies and start the backend
 backend $ cargo run
 ```
 ### Running the frontend
-
-```
+```bash
 $ cd frontend
 
 # Install dependencies
