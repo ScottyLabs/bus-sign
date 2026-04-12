@@ -8,7 +8,7 @@
         "build": "vite build",
         "preview": "vite preview",
         "check": "svelte-check --fail-on-warnings --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-        "postinstall": "bun2nix --output-file bun.nix"
+        "postinstall": "bun2nix --output-file bun.nix || true"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.4.4",
