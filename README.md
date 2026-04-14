@@ -1,24 +1,32 @@
 # Bus Sign
 
-A real-time bus sign for the Cohon University Center at Carnegie Mellon University.
+## Prerequisites
+- [Bun](https://bun.com/docs/installation) - JavaScript runtime and package manager
+- [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) - Rust package manager and build system
+- PRT API Key - Obtained from creating a TrueTime account [here](https://realtime.portauthority.org/bustime/createAccount.jsp)
 
-## Initial Setup
+## Setup
+### Setting up your environment variables
+```bash
+# Copy env variables from .env.example
+$ cp .env.example .env
 
-1. Create a `.env` file in the project root directory, following the format of `.env.example`. Note that you will need a PRT API key to run this project.
+# Add your PRT_API_KEY to the .env file
+```
+### Running the backend
+```bash
+$ cd backend
 
-2. Install `npm`.
+# Install dependencies and start the backend
+backend $ cargo run
+```
+### Running the frontend
+```bash
+$ cd frontend
 
-3. Install relevant dependencies:
-`npm install --prefix frontend`
+# Install dependencies
+frontend $ bun install
 
-## Running the Project
-
-Navigate to the project's root directory, then run the following commands.
-
-**Frontend**
-
-`npm run dev --prefix frontend`
-
-**Backend**
-
-`cargo run --manifest-path backend/Cargo.toml`
+# Start the frontend
+frontend $ bun dev
+```
