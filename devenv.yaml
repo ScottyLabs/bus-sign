@@ -1,4 +1,6 @@
 inputs:
+  scottylabs:
+    url: github:ScottyLabs/devenv
   rust-overlay:
     url: github:oxalica/rust-overlay
     inputs:
@@ -6,6 +8,11 @@ inputs:
         follows: nixpkgs
   treefmt-nix:
     url: github:numtide/treefmt-nix
+  git-hooks:
+    url: github:cachix/git-hooks.nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
   bun2nix:
     url: github:nix-community/bun2nix
     inputs:

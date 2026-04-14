@@ -1,9 +1,9 @@
 name: Backend CI
-on: 
+on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -69,7 +69,7 @@ jobs:
         with:
           command: fmt
           args: --manifest-path backend/Cargo.toml --all -- --check
-      
+
       - name: Run cargo clippy
         uses: actions-rs/clippy-check@v1
         with:

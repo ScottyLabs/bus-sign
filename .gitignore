@@ -5,16 +5,24 @@
 result
 result-*
 
+# AI
+.mcp.json
+.claude
+
 # direnv
 .direnv/
 
 # Rust
 target/
+.cargo/
 
-# Bun
+# Bun / Node
 node_modules/
 dist/
 
 # Environment
 .env
+
+# OS
 .DS_Store
+rustc-ice-*.txt
