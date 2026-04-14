@@ -30,4 +30,3 @@ frontend $ bun install
 # Start the frontend
 frontend $ bun dev
 ```
-
