@@ -60,26 +60,22 @@ struct Cache {
 /// Represents various app failures when processing a request.
 enum AppError {
     /// A network/connection error occurred while contacting the upstream PRT API.
-    UpstreamError(reqwest::Error),
+    Upstream(reqwest::Error),
     /// The PRT API returned bad JSON; data that does not match our structs.
-    JsonError(serde_json::Error),
+    Json(serde_json::Error),
     /// The PRT API returned OK, but embedded an error message in the payload.
-    PrtApiError(String),
+    PrtApi(String),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            AppError::UpstreamError(e) => {
-                (StatusCode::BAD_GATEWAY, format!("API Connect Error: {}", e))
-            }
-            AppError::JsonError(e) => (
+            AppError::Upstream(e) => (StatusCode::BAD_GATEWAY, format!("API Connect Error: {}", e)),
+            AppError::Json(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("API Parse Error: {}", e),
             ),
-            AppError::PrtApiError(msg) => {
-                (StatusCode::BAD_GATEWAY, format!("PRT API Error: {}", msg))
-            }
+            AppError::PrtApi(msg) => (StatusCode::BAD_GATEWAY, format!("PRT API Error: {}", msg)),
         };
         (status, Json(serde_json::json!({ "error": error_message }))).into_response()
     }
@@ -194,12 +190,12 @@ async fn get_predictions(
         .get(&url)
         .send()
         .await
-        .map_err(AppError::UpstreamError)?;
+        .map_err(AppError::Upstream)?;
 
     // PRT API sometimes returns escaped slashes that break JSON parsing
-    let raw_text = resp.text().await.map_err(AppError::UpstreamError)?;
+    let raw_text = resp.text().await.map_err(AppError::Upstream)?;
     let clean_text = raw_text.replace(r"\", "/");
-    let prt_data: PrtResponse = serde_json::from_str(&clean_text).map_err(AppError::JsonError)?;
+    let prt_data: PrtResponse = serde_json::from_str(&clean_text).map_err(AppError::Json)?;
 
     // 3. handle PRT errors
     if let Some(errors) = prt_data.response.api_error {
@@ -225,15 +221,14 @@ async fn get_predictions(
             // update actual cache data here so that next cache pull doesn't use old data
             adjust_cached_times(&mut cache.data, elapsed_seconds);
 
-            // update timestamp
+            // update timestamp and return Ok (with stale data)
             cache.last_update = Some(now);
-
             return Ok(Json(cache.data.clone()));
         }
 
         // if no cache exists yet, update timestamp to avoid API spam and return Err
         cache.last_update = Some(Utc::now());
-        return Err(AppError::PrtApiError(combined_msg));
+        return Err(AppError::PrtApi(combined_msg));
     }
 
     // 4. parse API data into frontend format
