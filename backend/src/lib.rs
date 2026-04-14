@@ -17,8 +17,6 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
-/// Base URL for PRT Truetime API.
-const BASE_URL: &str = "http://truetime.portauthority.org/bustime/api/v3";
 /// Comma-separated list of stop IDs to query.
 const STOPS: &str = "4407,7117";
 /// Resolution of predicted time data ('s' for seconds).
@@ -30,19 +28,26 @@ const FEED_NAME: &str = "Port Authority Bus";
 const CACHE_DURATION_SECONDS: i64 = 20;
 
 /// Global application state, shared across all HTTP requests.
+/// Note that these (and cache) are pub to allow for unit testing.
 #[derive(Clone)]
 pub struct AppState {
-    api_key: String,
-    client: reqwest::Client,
-    cache: Arc<Mutex<Cache>>,
+    pub api_key: String,
+    pub base_url: String,
+    pub client: reqwest::Client,
+    pub cache: Arc<Mutex<Cache>>,
 }
 
 impl AppState {
     /// Initializes a new application state with an empty cache.
-    pub fn new(api_key: String) -> Self {
+    pub fn new(api_key: String, base_url: Option<String>) -> Self {
         Self {
             api_key,
-            client: reqwest::Client::new(),
+            base_url: base_url
+                .unwrap_or_else(|| "http://truetime.portauthority.org/bustime/api/v3".to_string()),
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(5))
+                .build()
+                .unwrap(),
             cache: Arc::new(Mutex::new(Cache {
                 last_update: None,
                 data: HashMap::new(),
@@ -52,8 +57,8 @@ impl AppState {
 }
 
 /// Stores the most recent successful API response and its timestamp.
-struct Cache {
-    last_update: Option<DateTime<Utc>>,
+pub struct Cache {
+    pub last_update: Option<DateTime<Utc>>,
     data: FrontendResponse,
 }
 
@@ -182,7 +187,7 @@ async fn get_predictions(
     println!("Fetching from API");
     let url = format!(
         "{}/getpredictions?key={}&stpid={}&tmres={}&rtpidatafeed={}&format=json",
-        BASE_URL, state.api_key, STOPS, TIME_RES, FEED_NAME
+        state.base_url, state.api_key, STOPS, TIME_RES, FEED_NAME
     );
 
     let resp = state
@@ -295,9 +300,82 @@ fn adjust_cached_times(data: &mut FrontendResponse, elapsed_seconds: i64) {
         for group in route_groups {
             for arrival in &mut group.arrivals {
                 if arrival.seconds > 30 {
-                    arrival.seconds -= elapsed_seconds;
+                    // don't let the time drop below 0
+                    arrival.seconds = std::cmp::max(0, arrival.seconds - elapsed_seconds);
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    // Helper function to generate mock frontend data
+    fn create_mock_data(seconds: i64) -> FrontendResponse {
+        let arrival = BusArrival {
+            bus_id: "1234".to_string(),
+            seconds,
+            capacity: "HALF_EMPTY".to_string(),
+        };
+
+        let group = RouteGroup {
+            route: "61A".to_string(),
+            destination: "Downtown".to_string(),
+            arrivals: vec![arrival],
+        };
+
+        let mut data = HashMap::new();
+        data.insert("4407".to_string(), vec![group]);
+        data
+    }
+
+    #[test]
+    fn test_adjust_cached_times_reduces_time() {
+        let mut data = create_mock_data(60); // 60 seconds away
+
+        // Simulate 20 seconds passing
+        adjust_cached_times(&mut data, 20);
+
+        let adjusted_seconds = data["4407"][0].arrivals[0].seconds;
+        assert_eq!(adjusted_seconds, 40, "Time should be reduced by 20 seconds");
+    }
+
+    #[test]
+    fn test_adjust_cached_times_ignores_close_buses() {
+        let mut data = create_mock_data(25); // 25 seconds away (under 30s threshold)
+
+        // Simulate 10 seconds passing
+        adjust_cached_times(&mut data, 10);
+
+        let adjusted_seconds = data["4407"][0].arrivals[0].seconds;
+        assert_eq!(
+            adjusted_seconds, 25,
+            "Time should not be reduced if already <= 30 seconds"
+        );
+    }
+
+    #[test]
+    fn test_adjust_cached_times_crosses_threshold() {
+        let mut data = create_mock_data(40); // 40 seconds away
+
+        // Simulate 20 seconds passing
+        adjust_cached_times(&mut data, 20);
+
+        let adjusted_seconds = data["4407"][0].arrivals[0].seconds;
+        assert_eq!(
+            adjusted_seconds, 20,
+            "Time should reduce even if the subtraction pushes it below 30"
+        );
+
+        // Run it again now that it is at 20 seconds
+        adjust_cached_times(&mut data, 10);
+        let second_adjustment = data["4407"][0].arrivals[0].seconds;
+        assert_eq!(
+            second_adjustment, 20,
+            "Further reductions should be blocked now that it is <= 30"
+        );
     }
 }

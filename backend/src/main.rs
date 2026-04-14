@@ -24,11 +24,11 @@ async fn main() {
         .parse()
         .expect("API_PORT must be a valid port number");
 
-    // 2. init app state
-    let state = AppState::new(api_key);
+    // 2. init app state (Passing None as base_url uses default live PRT API)
+    let state = AppState::new(api_key, None);
 
     // 3. build router and attach CORS security middleware
-    // NOTE: allow(Any) is used for development but not best practice; fix before deploying to prod
+    // NOTE: allow(Any) is used for development but not best practice
     let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any);
 
     let app = create_router(state).layer(cors);
