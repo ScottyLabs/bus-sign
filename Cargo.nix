@@ -1326,6 +1326,14 @@ rec {
         };
         resolvedDefaultFeatures = [ "default" ];
       };
+      "http-range-header" = rec {
+        crateName = "http-range-header";
+        version = "0.4.2";
+        edition = "2018";
+        sha256 = "171mszmmq0lzpj9brig4wz1sz8hh3h6dgmaxs69q2db8ibma4wci";
+        libName = "http_range_header";
+
+      };
       "httparse" = rec {
         crateName = "httparse";
         version = "1.10.1";
@@ -2470,6 +2478,34 @@ rec {
           "Sean McArthur <sean@seanmonstar.com>"
         ];
 
+      };
+      "mime_guess" = rec {
+        crateName = "mime_guess";
+        version = "2.0.5";
+        edition = "2015";
+        sha256 = "03jmg3yx6j39mg0kayf7w4a886dl3j15y8zs119zw01ccy74zi7p";
+        authors = [
+          "Austin Bonander <austin.bonander@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "mime";
+            packageId = "mime";
+          }
+          {
+            name = "unicase";
+            packageId = "unicase";
+          }
+        ];
+        buildDependencies = [
+          {
+            name = "unicase";
+            packageId = "unicase";
+          }
+        ];
+        features = {
+          "default" = [ "rev-mappings" ];
+        };
       };
       "mio" = rec {
         crateName = "mio";
@@ -3630,7 +3666,7 @@ rec {
           {
             name = "tower-http";
             packageId = "tower-http 0.5.2";
-            features = [ "cors" ];
+            features = [ "cors" "fs" ];
           }
         ];
 
@@ -4652,6 +4688,12 @@ rec {
             packageId = "bytes";
           }
           {
+            name = "futures-util";
+            packageId = "futures-util";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
+          {
             name = "http";
             packageId = "http";
           }
@@ -4664,8 +4706,48 @@ rec {
             packageId = "http-body-util";
           }
           {
+            name = "http-range-header";
+            packageId = "http-range-header";
+            optional = true;
+          }
+          {
+            name = "httpdate";
+            packageId = "httpdate";
+            optional = true;
+          }
+          {
+            name = "mime";
+            packageId = "mime";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "mime_guess";
+            packageId = "mime_guess";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "percent-encoding";
+            packageId = "percent-encoding";
+            optional = true;
+          }
+          {
             name = "pin-project-lite";
             packageId = "pin-project-lite";
+          }
+          {
+            name = "tokio";
+            packageId = "tokio";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "tokio-util";
+            packageId = "tokio-util";
+            optional = true;
+            usesDefaultFeatures = false;
+            features = [ "io" ];
           }
           {
             name = "tower-layer";
@@ -4675,11 +4757,26 @@ rec {
             name = "tower-service";
             packageId = "tower-service";
           }
+          {
+            name = "tracing";
+            packageId = "tracing";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
         ];
         devDependencies = [
           {
             name = "bytes";
             packageId = "bytes";
+          }
+          {
+            name = "futures-util";
+            packageId = "futures-util";
+          }
+          {
+            name = "tokio";
+            packageId = "tokio";
+            features = [ "full" ];
           }
         ];
         features = {
@@ -4719,7 +4816,7 @@ rec {
           "uuid" = [ "dep:uuid" ];
           "validate-request" = [ "mime" ];
         };
-        resolvedDefaultFeatures = [ "cors" "default" ];
+        resolvedDefaultFeatures = [ "cors" "default" "fs" "futures-util" "httpdate" "mime" "mime_guess" "percent-encoding" "set-status" "tokio" "tokio-util" "tracing" ];
       };
       "tower-http 0.6.8" = rec {
         crateName = "tower-http";
@@ -4934,6 +5031,17 @@ rec {
           "Sean McArthur <sean@seanmonstar.com>"
         ];
 
+      };
+      "unicase" = rec {
+        crateName = "unicase";
+        version = "2.9.0";
+        edition = "2018";
+        sha256 = "0hh1wrfd7807mfph2q67jsxqgw8hm82xg2fb8ln8cvblkwxbri6v";
+        authors = [
+          "Sean McArthur <sean@seanmonstar.com>"
+        ];
+        features = {
+        };
       };
       "unicode-ident" = rec {
         crateName = "unicode-ident";

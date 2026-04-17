@@ -1,7 +1,7 @@
 //! Core logic for CMU bus sign backend.
 //!
 //! Communicates with the Pittsburgh Regional Transit (PRT) API,
-//! serving cleaned data to http://{API_HOST}:{API_PORT}/predictions.
+//! serving cleaned data to http://{HOST}:{PORT}/predictions.
 //!
 //! Stale cache (20 sec.) mechanism in place to respect API rate limit (10,000 calls/day).
 

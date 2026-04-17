@@ -35,7 +35,7 @@
           let
             b2n = bun2nix.packages.${system}.default;
 
-            busSignFrontend = b2n.mkDerivation {
+            frontend = b2n.mkDerivation {
               pname = "bus-sign-frontend";
               version = (builtins.fromJSON (builtins.readFile ./frontend/package.json)).version;
               src = ./frontend;
@@ -56,12 +56,16 @@
 
             cargoNix = pkgs.callPackage ./Cargo.nix { };
 
-            busSignBackend = cargoNix.rootCrate.build;
+            backend = cargoNix.rootCrate.build.overrideAttrs (old: {
+              postInstall = ''
+                cp -r ${frontend} $out/static
+              '';
+            });
 
           in
           {
-            inherit busSignFrontend busSignBackend;
-            default = busSignBackend;
+            inherit frontend backend;
+            default = backend;
           }
         ))
       );

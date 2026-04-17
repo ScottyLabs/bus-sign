@@ -2,7 +2,7 @@
 
 let
   cargoNix = pkgs.callPackage ./Cargo.nix { };
-  busSignBackend = cargoNix.rootCrate.build;
+  backend = cargoNix.rootCrate.build;
 in
 {
   imports = [ inputs.scottylabs.devenvModules.default ];
@@ -12,11 +12,12 @@ in
     project.name = "bus-sign";
     rust.enable = true;
     bun.enable = true;
+    kennel.services.backend = { };
   };
 
   packages = [
     inputs.bun2nix.packages.${pkgs.stdenv.system}.default
   ];
 
-  outputs = { inherit busSignBackend; };
+  outputs = { inherit backend; };
 }
