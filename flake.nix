@@ -31,7 +31,7 @@
         {
           devenv = devenv.packages.${system}.devenv;
         }
-        // (nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
+        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
           let
             b2n = bun2nix.packages.${system}.default;
 
@@ -67,7 +67,7 @@
             inherit frontend backend;
             default = backend;
           }
-        ))
+        )
       );
     };
 }
