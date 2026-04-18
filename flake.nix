@@ -11,10 +11,7 @@
   inputs = {
     nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     devenv.url = "github:cachix/devenv";
-    bun2nix = {
-      url = "github:nix-community/bun2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    bun2nix.url = "github:nix-community/bun2nix";
   };
 
   outputs = { self, nixpkgs, devenv, bun2nix, ... }:

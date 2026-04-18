@@ -12,7 +12,10 @@ in
     project.name = "bus-sign";
     rust.enable = true;
     bun.enable = true;
-    kennel.services.backend = { };
+    secrets.enable = true;
+    kennel.services.backend = {
+      customDomain = "bus-sign.scottylabs.org";
+    };
   };
 
   packages = [
