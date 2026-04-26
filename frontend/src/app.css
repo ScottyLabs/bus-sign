@@ -6,45 +6,16 @@ main {
     display: flex;
     flex-direction: column;
     width: 100vw;
-    height: 100%;
-    min-height: 100vh;
-    background-color: white;
-    font-family: "Helvetica Rounded", sans-serif;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+    background-color: #050505;
+    font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
 }
 
 main {
     flex: 1 1 auto;
-}
-
-.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    flex: 1 1 auto;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 1rem;
-    border: 1px solid #ccc;
-}
-
-.left,
-.right {
-    padding: 10px;
-}
-
-.stack {
-    display: flex;
-    flex-direction: column;
-}
-
-.stack.left {
-    align-items: flex-start;
-}
-
-.stack.right {
-    align-items: flex-end;
 }
 
 @keyframes pulse {
