@@ -206,6 +206,9 @@
         "devenv": "devenv",
         "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs",
+        "pre-commit-hooks": [
+          "git-hooks"
+        ],
         "rust-overlay": "rust-overlay",
         "scottylabs": "scottylabs",
         "treefmt-nix": "treefmt-nix_2"
