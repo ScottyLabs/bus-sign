@@ -1,4 +1,4 @@
-{ pkgs, config, inputs, ... }:
+{ pkgs, inputs, ... }:
 
 let
   b2n = inputs.bun2nix.packages.${pkgs.stdenv.system}.default;
@@ -36,7 +36,6 @@ in
     enable = true;
     project.name = "bus-sign";
     rust.enable = true;
-    bun.enable = true;
     secrets.enable = true;
     kennel.services.backend = {
       customDomain = "bus-sign.scottylabs.org";
@@ -45,13 +44,7 @@ in
 
   cachix.enable = false;
 
-  packages = [
-    inputs.bun2nix.packages.${pkgs.stdenv.system}.default
-  ];
-
   outputs = { inherit backend; };
 
-  processes.backend.exec = "secretspec run --profile dev -- cargo run -p scottylabs_bus_backend";
-
-  env.VAULT_ADDR = "https://secrets2.scottylabs.org";
+  processes.backend.exec = "secretspec run --profile dev -- cargo run";
 }
