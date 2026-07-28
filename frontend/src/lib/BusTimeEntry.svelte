@@ -6,12 +6,18 @@
         capacity: string;
         seconds: number;
     }[];
+    export let routeColor: string | null = null;
     export let highlightStartSeconds: number | null = null;
     export let highlightEndSeconds: number | null = null;
+    export let placeholder = false;
 
     const capacityLevels: Record<string, number> = {
         EMPTY: 0,
-        HALF_EMPTY: 2,
+        HALF_EMPTY: 1,
+        MEDIUM: 1,
+        MANY_SEATS_AVAILABLE: 1,
+        FEW_SEATS_AVAILABLE: 2,
+        STANDING_ROOM_ONLY: 2,
         FULL: 3,
     };
 
@@ -20,6 +26,28 @@
         1: "Not busy",
         2: "Busy",
         3: "Crowded",
+    };
+    const capacityColors: Record<number, { active: string; inactive: string; label: string }> = {
+        0: {
+            active: "#b8f3c7",
+            inactive: "#b8f3c7",
+            label: "#16743c",
+        },
+        1: {
+            active: "#ffc627",
+            inactive: "#fff2a8",
+            label: "#ffc627",
+        },
+        2: {
+            active: "#e66f00",
+            inactive: "#ffd3a6",
+            label: "#e66f00",
+        },
+        3: {
+            active: "#bd1238",
+            inactive: "#f5b0bf",
+            label: "#bd1238",
+        },
     };
 
     const formatTimeRemaining = (seconds: number): string => {
@@ -39,7 +67,8 @@
         value
             .toLowerCase()
             .replace(/\b[a-z]/g, (letter) => letter.toUpperCase())
-            .replace(/\bMc([a-z])/g, (_, letter: string) => `Mc${letter.toUpperCase()}`);
+            .replace(/\bMc([a-z])/g, (_, letter: string) => `Mc${letter.toUpperCase()}`)
+            .replace(/\bCcac\b/g, "CCAC");
 
     $: nextArrival = arrivals[0];
     $: timeDisplay = nextArrival ? formatTimeRemaining(nextArrival.seconds) : "--";
@@ -56,32 +85,39 @@
         destination.toLowerCase().includes("airport")
             ? "(✈ PIT) Pittsburgh International Airport"
             : formatTitleCase(destination || vehicleLabel);
+    $: destinationColor = routeColor;
     $: capacityLevel = nextArrival?.capacity
-        ? capacityLevels[nextArrival.capacity] || 0
+        ? capacityLevels[nextArrival.capacity.trim().toUpperCase()] || 0
         : 0;
+    $: capacityColor = capacityColors[capacityLevel];
 </script>
 
-<article class="arrival-row">
-    <div class="mode-icon" aria-hidden="true">
-        <span class="bus-window"></span>
-        <span class="bus-body"></span>
-        <span class="bus-wheel left-wheel"></span>
-        <span class="bus-wheel right-wheel"></span>
-    </div>
-
+<article
+    class="arrival-row"
+    class:walk-window-row={isWalkWindow && !isNow}
+    class:now-row={isNow}
+    class:placeholder-row={placeholder}
+    aria-hidden={placeholder}
+>
     <div class="route-copy">
         <div class="route">
-            <span>{route}</span>
+            <span style:color={routeColor}>{route}</span>
             {#if nextArrival?.bus_id}
                 <small>{nextArrival.bus_id}</small>
             {/if}
         </div>
-        <div class="destination">
+        <div class="destination" style:color={destinationColor}>
             {destinationDisplay}
         </div>
     </div>
 
-    <div class="capacity-icons" aria-label="Capacity level {capacityLevel} of 3">
+    <div
+        class="capacity-icons"
+        aria-label="Capacity level {capacityLevel} of 3"
+        style:--capacity-active={capacityColor.active}
+        style:--capacity-inactive={capacityColor.inactive}
+        style:--capacity-label={capacityColor.label}
+    >
         <div class="person-row">
             {#each [1, 2, 3] as level}
                 <span class:active={capacityLevel >= level} class="person-icon">
@@ -94,7 +130,7 @@
     </div>
 
     <div class="time-copy">
-        <div class="time" class:now={isNow} class:walk-window={isWalkWindow}>{timeDisplay}</div>
+        <div class="time" class:now={isNow}>{timeDisplay}</div>
         <div class="arrival-clock">{clockTime}</div>
     </div>
 </article>
@@ -102,70 +138,36 @@
 <style>
     .arrival-row {
         display: grid;
-        grid-template-columns: 66px minmax(0, 1fr) 96px 116px;
+        grid-template-columns: minmax(0, 1fr) 96px 116px;
         align-items: center;
         gap: 20px;
-        min-height: 94px;
+        height: 106px;
         padding: 12px 0;
         box-sizing: border-box;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        color: #ffffff;
+        border-top: 1px solid rgba(5, 5, 5, 0.2);
+        color: #050505;
+    }
+
+    .walk-window-row {
+        animation: walk-window-flash 3.2s ease-in-out infinite;
+    }
+
+    .now-row {
+        animation: now-row-flash 2s ease-in-out infinite;
     }
 
     .arrival-row:last-child {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(5, 5, 5, 0.2);
     }
 
-    .mode-icon {
-        position: relative;
-        width: 48px;
-        height: 48px;
-        display: grid;
-        place-items: center;
-        border: 4px solid #f3b7c9;
-        border-radius: 50%;
-        box-sizing: border-box;
+    .placeholder-row {
+        color: transparent;
     }
 
-    .bus-window,
-    .bus-body,
-    .bus-wheel {
-        position: absolute;
-        display: block;
-        box-sizing: border-box;
-    }
-
-    .bus-body {
-        width: 24px;
-        height: 23px;
-        border: 3px solid #f3b7c9;
-        border-radius: 3px;
-        top: 10px;
-        left: 8px;
-    }
-
-    .bus-window {
-        width: 20px;
-        height: 8px;
-        border: 2px solid #f3b7c9;
-        top: 14px;
-        left: 10px;
-    }
-
-    .bus-wheel {
-        width: 5px;
-        height: 5px;
-        background: #f3b7c9;
-        border-radius: 50%;
-        bottom: 11px;
-    }
-
-    .left-wheel {
-        left: 14px;
-    }
-
-    .right-wheel {
-        right: 14px;
+    .placeholder-row .route-copy,
+    .placeholder-row .capacity-icons,
+    .placeholder-row .time-copy {
+        visibility: hidden;
     }
 
     .route-copy {
@@ -177,7 +179,7 @@
         align-items: baseline;
         gap: 10px;
         min-width: 0;
-        font-size: clamp(30px, 3.4vw, 58px);
+        font-size: clamp(28px, 3.1vw, 52px);
         line-height: 0.95;
         letter-spacing: 0;
         white-space: nowrap;
@@ -189,11 +191,12 @@
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-weight: 600;
     }
 
     .route small {
         flex: 0 0 auto;
-        color: #cfcfcf;
+        color: #404040;
         font-size: clamp(12px, 1vw, 18px);
         line-height: 1;
         white-space: nowrap;
@@ -201,7 +204,7 @@
 
     .destination {
         margin-top: 5px;
-        color: #d8d8d8;
+        color: #272727;
         font-size: clamp(12px, 0.95vw, 17px);
         line-height: 1.1;
         white-space: nowrap;
@@ -253,23 +256,23 @@
         width: 14px;
         height: 14px;
         border-radius: 50%;
-        background: #777;
+        background: var(--capacity-inactive);
     }
 
     .person-body {
         width: 22px;
         height: 25px;
         border-radius: 8px 8px 3px 3px;
-        background: #777;
+        background: var(--capacity-inactive);
     }
 
     .person-icon.active .person-head,
     .person-icon.active .person-body {
-        background: #f2f2f2;
+        background: var(--capacity-active);
     }
 
     .capacity-label {
-        color: #d7d7d7;
+        color: var(--capacity-label);
         font-size: 11px;
         line-height: 1;
         min-height: 11px;
@@ -279,8 +282,8 @@
     }
 
     .time {
-        color: #ffffff;
-        font-size: clamp(30px, 3.2vw, 56px);
+        color: #050505;
+        font-size: clamp(28px, 3vw, 50px);
         line-height: 0.95;
         white-space: nowrap;
         letter-spacing: 0;
@@ -288,31 +291,41 @@
 
     .arrival-clock {
         margin-top: 5px;
-        color: #ffffff;
+        color: #050505;
         font-size: clamp(12px, 1vw, 18px);
         line-height: 1;
         white-space: nowrap;
     }
 
     .now {
-        color: #82d7a4;
         animation: pulse 1.5s ease-in-out infinite;
     }
 
-    .walk-window {
-        color: #ffc627;
+    @keyframes walk-window-flash {
+        0%,
+        100% {
+            background: #fffdf1;
+        }
+        50% {
+            background: #fff8d8;
+        }
+    }
+
+    @keyframes now-row-flash {
+        0%,
+        100% {
+            background: #f9d4db;
+        }
+        50% {
+            background: #efb5bf;
+        }
     }
 
     @media (max-width: 900px) {
         .arrival-row {
-            grid-template-columns: 52px minmax(0, 1fr) 74px 92px;
+            grid-template-columns: minmax(0, 1fr) 74px 92px;
             gap: 14px;
-            min-height: 78px;
-        }
-
-        .mode-icon {
-            width: 42px;
-            height: 42px;
+            height: 86px;
         }
 
         .capacity-icons {

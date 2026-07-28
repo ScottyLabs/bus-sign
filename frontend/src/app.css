@@ -1,3 +1,21 @@
+@import url("/weather-icons/css/weather-icons.min.css");
+
+@font-face {
+    font-family: "Open Sans";
+    src: url("/fonts/OpenSans-Light.ttf") format("truetype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Open Sans";
+    src: url("/fonts/OpenSans-LightItalic.ttf") format("truetype");
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
 html,
 body,
 #app,
@@ -9,9 +27,9 @@ main {
     height: 100vh;
     min-height: 0;
     overflow: hidden;
-    background-color: #050505;
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: bold;
+    background-color: #ffffff;
+    font-family: "Open Sans", Arial, Helvetica, sans-serif;
+    font-weight: 300;
 }
 
 main {
