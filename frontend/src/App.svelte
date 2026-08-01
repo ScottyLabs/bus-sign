@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import BusTimeEntry from "./lib/BusTimeEntry.svelte";
+    import Header from "./lib/Header.svelte";
 
     type RouteInformation = {
         route: string;
@@ -75,10 +76,7 @@
 </script>
 
 <main>
-    <div class="header">
-        <img src="/scotty.svg" alt="Scotty Logo" class="header-logo" />
-        Live PRT Bus Arrivals (Forbes and Morewood)
-    </div>
+    <Header />
     <div
         class="container"
         style="justify-content: start; align-items: flex-start"
@@ -175,20 +173,6 @@
     .footer-text {
         gap: 0;
         padding: 0.25rem 0;
-    }
-
-    .header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 80px;
-        gap: 30px;
-    }
-
-    .header-logo {
-        width: auto;
-        height: 80px;
-        flex-shrink: 0;
     }
 
     .footer {
