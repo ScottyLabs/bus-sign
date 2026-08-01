@@ -14,46 +14,11 @@ main {
   font-family: "Open Sans", sans-serif;
 }
 
-main {
-  flex: 1 1 auto;
-}
-
-.container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  flex: 1 1 auto;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 1rem;
-  border: 1px solid #ccc;
-}
-
-.left,
-.right {
-  padding: 10px;
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-}
-
-.stack.left {
-  align-items: flex-start;
-}
-
-.stack.right {
-  align-items: flex-end;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.75;
-  }
+@theme {
+  --color-red: #c4213e;
+  --color-yellow: #ffb100;
+  --color-green: #0d923b;
+  --color-blue: #007dc5;
+  --color-gray: #6d6e71;
+  --color-light-gray: #e0e0e0;
 }
