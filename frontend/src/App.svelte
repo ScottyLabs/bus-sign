@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import BusTimeEntry from "./lib/BusTimeEntry.svelte";
     import Header from "./lib/Header.svelte";
+    import Footer from "./lib/Footer.svelte";
 
     type RouteInformation = {
         route: string;
@@ -53,8 +54,10 @@
                     (b.arrivals[0]?.seconds || Infinity),
             );
             lastUpdated = new Date();
-            paddingX = Math.max(entriesUC.length, entriesTep.length) <= 5 ? 16 : 4;
-            paddingY = Math.max(entriesUC.length, entriesTep.length) <= 5 ? 12 : 3;
+            paddingX =
+                Math.max(entriesUC.length, entriesTep.length) <= 5 ? 16 : 4;
+            paddingY =
+                Math.max(entriesUC.length, entriesTep.length) <= 5 ? 12 : 3;
         } catch (error) {
             console.error(error);
         }
@@ -82,7 +85,10 @@
         style="justify-content: start; align-items: flex-start"
     >
         <div class="stack left">
-            <div class="stop-header">UC Side <span class="arrow">&rarr;</span> <span class="stop-id">(Stop 7117)</span></div>
+            <div class="stop-header">
+                UC Side <span class="arrow">&rarr;</span>
+                <span class="stop-id">(Stop 7117)</span>
+            </div>
             {#each entriesUC as entry (entry.route + entry.destination)}
                 <BusTimeEntry {...entry} {paddingX} {paddingY} />
             {:else}
@@ -96,7 +102,10 @@
             {/each}
         </div>
         <div class="stack left">
-            <div class="stop-header">Tepper Side <span class="arrow">&larr;</span> <span class="stop-id">(Stop 4407)</span></div>
+            <div class="stop-header">
+                Tepper Side <span class="arrow">&larr;</span>
+                <span class="stop-id">(Stop 4407)</span>
+            </div>
             {#each entriesTep as entry (entry.route + entry.destination)}
                 <BusTimeEntry {...entry} {paddingX} {paddingY} />
             {:else}
@@ -110,21 +119,7 @@
             {/each}
         </div>
     </div>
-    <footer class="footer">
-        <div class="stack footer-text">
-            <p class="attribution">
-                Project by Undergraduate Student Senate via collaboration with ScottyLabs.<br>
-                Funded in part by your Student Activities Fee.
-            </p>
-            <p class="disclaimer">
-                Data provided under license from PRT; this application is not
-                officially endorsed by Pittsburgh Regional Transit.
-            </p>
-        </div>
-        {#if formattedTime}
-            <p class="last-updated">Last updated: {formattedTime}</p>
-        {/if}
-    </footer>
+    <Footer />
 </main>
 
 <style>
@@ -153,45 +148,5 @@
         color: rgba(178, 18, 196, 0.8);
         line-height: 1;
         transform: translateY(-4px);
-    }
-
-    .attribution {
-        font-weight: bold;
-        font-size: 40px;
-        color: black;
-        padding-left: 20px;
-        margin: 0;
-    }
-
-    .disclaimer {
-        font-weight: normal;
-        color: gray;
-        padding-left: 20px;
-        margin: 0;
-    }
-
-    .footer-text {
-        gap: 0;
-        padding: 0.25rem 0;
-    }
-
-    .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: white;
-        border: 1px solid #ccc;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        z-index: 1000;
-    }
-
-    .last-updated {
-        font-weight: normal;
-        color: gray;
-        font-size: 14px;
-        padding-right: 20px;
     }
 </style>

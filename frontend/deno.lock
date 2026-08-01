@@ -1,6 +1,7 @@
 {
   "version": "5",
   "specifiers": {
+    "npm:@iconify-json/lucide@^1.2.120": "1.2.120",
     "npm:@iconify-json/wi@^1.2.1": "1.2.1",
     "npm:@sveltejs/vite-plugin-svelte@^6.2.4": "6.2.4_svelte@5.56.8_vite@7.3.6__@types+node@25.9.5_@types+node@25.9.5",
     "npm:@tailwindcss/vite@^4.3.3": "4.3.3_vite@7.3.6__@types+node@25.9.5",
@@ -150,6 +151,12 @@
       "integrity": "sha512-bm4Mowrv+GXMlpWX++EcXw/iLyd1o3+bJkC2DkWXYVvgZCqD/bSj9ctZeAMC3cIxgjRVR2Dufaiu4YPxr5gW1A==",
       "os": ["win32"],
       "cpu": ["x64"]
+    },
+    "@iconify-json/lucide@1.2.120": {
+      "integrity": "sha512-4ECF24fxag1n5tZlPGrbWuCGqhkwD0rvAzfCXretqQb4KEC8Y6ja3khF8qmvpR1Mk0NQDhBTRK3Fr/YoV8QyJw==",
+      "dependencies": [
+        "@iconify/types"
+      ]
     },
     "@iconify-json/wi@1.2.1": {
       "integrity": "sha512-I4rLsMC0ta51SzapStkF253WMX7CwjwuAYSa8uWNDOHqM4kYXfkyMbATAQ/oRTOKXiqd/eHCL/RzI5sDvCh8lA==",
@@ -896,6 +903,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@iconify-json/lucide@^1.2.120",
         "npm:@iconify-json/wi@^1.2.1",
         "npm:@sveltejs/vite-plugin-svelte@^6.2.4",
         "npm:@tailwindcss/vite@^4.3.3",
