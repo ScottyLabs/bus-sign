@@ -201,7 +201,7 @@
       "locked": {
         "lastModified": 1781040581,
         "ref": "refs/heads/main",
-        "rev": "5b23dbca076d09dcd03585f5e021b6285e30b4ce",
+        "rev": "56c5e806bf7a5a6e73d09403ea9828c13d7dd4c5",
         "revCount": 31,
         "type": "git",
         "url": "https://codeberg.org/ScottyLabs/devenv"
