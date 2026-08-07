@@ -2,38 +2,41 @@
 
 ## Prerequisites
 
-- [Bun](https://bun.com/docs/installation) - JavaScript runtime and package manager
-- [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) - Rust package manager and build system
+- [devenv](https://devenv.sh/getting-started/) - provides Cargo, Deno, and other tooling via Nix
 - PRT API Key - Obtained from creating a TrueTime account [here](https://realtime.portauthority.org/bustime/createAccount.jsp)
 
 ## Setup
 
 ### Setting up your environment variables
 
-```bash
-# Copy env variables from .env.example
-$ cp .env.example .env
+Secrets are managed with secretspec. Authenticate once per machine with:
 
-# Add your PRT_API_KEY to the .env file
+```bash
+nix run git+https://codeberg.org/ScottyLabs/kennel#login
+```
+
+Allow devenv, or enter the shell if already allowed:
+
+```bash
+devenv allow
+# or: devenv shell
 ```
 
 ### Running the backend
 
 ```bash
-$ cd backend
-
-# Install dependencies and start the backend
-backend $ cargo run
+# From the repo root, inside the devenv shell
+cargo run -p backend
 ```
 
 ### Running the frontend
 
 ```bash
-$ cd frontend
+cd frontend
 
 # Install dependencies
-frontend $ bun install
+deno install
 
 # Start the frontend
-frontend $ bun dev
+deno task dev
 ```

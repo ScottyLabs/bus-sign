@@ -5,7 +5,7 @@
 //! set (or a `static` directory exists next to the binary), the server
 //! also serves the frontend as a fallback behind the API routes.
 
-use scottylabs_bus_backend::{AppState, create_router};
+use backend::{AppState, create_router};
 use std::env;
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;

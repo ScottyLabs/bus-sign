@@ -1,6 +1,12 @@
+secretspec:
+  enable: true
+  provider: vault://secrets.scottylabs.org/secret
+
 inputs:
+  nixpkgs:
+    url: github:nixos/nixpkgs/nixos-unstable
   scottylabs:
-    url: git+https://codeberg.org/ScottyLabs/devenv
+    url: git+https://codeberg.org/ScottyLabs/kennel
   rust-overlay:
     url: github:oxalica/rust-overlay
     inputs:
@@ -13,13 +19,3 @@ inputs:
     inputs:
       nixpkgs:
         follows: nixpkgs
-  bun2nix:
-    url: github:nix-community/bun2nix
-    inputs:
-      nixpkgs:
-        follows: nixpkgs
-
-secretspec:
-  enable: true
-  provider: vault://secrets2.scottylabs.org/secret
-  profile: dev

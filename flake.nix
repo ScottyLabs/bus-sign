@@ -9,62 +9,57 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
-    devenv.url = "github:cachix/devenv";
-    bun2nix.url = "github:nix-community/bun2nix";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    scottylabs = {
+      url = "git+https://codeberg.org/ScottyLabs/kennel";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, devenv, bun2nix, ... }:
+  outputs =
+    {
+      nixpkgs,
+      scottylabs,
+      ...
+    }:
     let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      pkgsFor = system: nixpkgs.legacyPackages.${system};
+      forAllSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     in
     {
-      packages = forAllSystems (system:
+      packages = forAllSystems (
+        system:
         let
-          pkgs = pkgsFor system;
-        in
-        {
-          devenv = devenv.packages.${system}.devenv;
-        }
-        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
-          let
-            b2n = bun2nix.packages.${system}.default;
+          pkgs = nixpkgs.legacyPackages.${system};
+          helpers = scottylabs.mkLib pkgs;
 
-            frontend = b2n.mkDerivation {
-              pname = "bus-sign-frontend";
-              version = (builtins.fromJSON (builtins.readFile ./frontend/package.json)).version;
-              src = ./frontend;
+          frontend = helpers.buildDenoTask {
+            src = ./frontend;
+            pname = "frontend";
+            task = "build";
+          };
 
-              bunDeps = b2n.fetchBunDeps {
-                bunNix = ./frontend/bun.nix;
-              };
-
-              buildPhase = ''
-                bun run build
-              '';
-
-              installPhase = ''
-                mkdir -p $out
-                cp -r dist/* $out/
+          backend = helpers.buildRustService {
+            src = ./.;
+            pname = "backend";
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            buildArgs = {
+              cargoExtraArgs = "-p backend";
+              postInstall = ''
+                mkdir -p $out/share/bus-sign/www
+                cp -r ${frontend}/* $out/share/bus-sign/www/
+                chmod -R u+w $out/share/bus-sign/www
+                wrapProgram $out/bin/backend \
+                  --set-default STATIC_DIR $out/share/bus-sign/www
               '';
             };
-
-            cargoNix = pkgs.callPackage ./Cargo.nix { };
-
-            backend = cargoNix.rootCrate.build.overrideAttrs (old: {
-              postInstall = ''
-                cp -r ${frontend} $out/static
-              '';
-            });
-
-          in
-          {
-            inherit frontend backend;
-            default = backend;
-          }
-        )
+          };
+        in
+        {
+          inherit frontend backend;
+        }
       );
     };
 }

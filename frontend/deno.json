@@ -1,0 +1,9 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --fail-on-warnings --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
+  }
+}

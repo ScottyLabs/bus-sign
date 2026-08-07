@@ -16,7 +16,7 @@ result-*
 target/
 .cargo/
 
-# Bun / Node
+# Deno / Node
 node_modules/
 dist/
 

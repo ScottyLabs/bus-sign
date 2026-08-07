@@ -1,34 +1,5 @@
-{ pkgs, inputs, ... }:
+{ lib, inputs, ... }:
 
-let
-  b2n = inputs.bun2nix.packages.${pkgs.stdenv.system}.default;
-
-  frontend = b2n.mkDerivation {
-    pname = "bus-sign-frontend";
-    version = (builtins.fromJSON (builtins.readFile ./frontend/package.json)).version;
-    src = ./frontend;
-
-    bunDeps = b2n.fetchBunDeps {
-      bunNix = ./frontend/bun.nix;
-    };
-
-    buildPhase = ''
-      bun run build
-    '';
-
-    installPhase = ''
-      mkdir -p $out
-      cp -r dist/* $out/
-    '';
-  };
-
-  cargoNix = pkgs.callPackage ./Cargo.nix { };
-  backend = cargoNix.rootCrate.build.overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      cp -r ${frontend} $out/static
-    '';
-  });
-in
 {
   imports = [ inputs.scottylabs.devenvModules.default ];
 
@@ -36,15 +7,17 @@ in
     enable = true;
     project.name = "bus-sign";
     rust.enable = true;
+    deno.enable = true;
     secrets.enable = true;
     kennel.services.backend = {
       customDomain = "bus-sign.scottylabs.org";
     };
   };
 
-  cachix.enable = false;
+  env.STATIC_DIR = "frontend/dist";
 
-  outputs = { inherit backend; };
-
-  processes.backend.exec = "secretspec run --profile dev -- cargo run";
+  git-hooks.hooks = {
+    deno-check.entry = lib.mkForce "bash -c 'cd frontend && deno check .'";
+    deno-test.entry = lib.mkForce "deno test --ignore=.devenv,.direnv --permit-no-files";
+  };
 }
