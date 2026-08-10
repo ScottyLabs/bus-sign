@@ -79,10 +79,10 @@
 
     $: dividerClass =
         !scheduled && variant === "coming"
-            ? "border-b-3 border-red"
+            ? "border-b-[0.1875rem] border-red"
             : !scheduled && variant === "soon"
-              ? "border-b-3 border-yellow"
-              : "border-b-2 border-light-gray";
+              ? "border-b-[0.1875rem] border-yellow"
+              : "border-b-[0.125rem] border-light-gray";
 
     $: insetClass =
         !scheduled && (variant === "coming" || variant === "soon")

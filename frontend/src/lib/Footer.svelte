@@ -5,7 +5,7 @@
 </script>
 
 <div
-    class="flex shrink-0 justify-between items-center py-3 px-10 shadow-[0_-1px_4px_0px_rgba(0,0,0,0.13)]"
+    class="flex shrink-0 justify-between items-center py-3 px-10 shadow-[0_-0.0625rem_0.25rem_0_rgba(0,0,0,0.13)]"
 >
     <div class="flex flex-row gap-2 items-center">
         <RefreshCW class="size-4" />
@@ -13,7 +13,7 @@
     </div>
     <div class="flex flex-row gap-2 items-center">
         <img
-            class="h-[22px] w-[25px]"
+            class="h-[1.375rem] w-[1.5625rem]"
             src="/ScottyLabs.svg"
             alt="ScottyLabs Logo"
         />

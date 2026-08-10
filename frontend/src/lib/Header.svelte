@@ -76,7 +76,7 @@
 </script>
 
 <div
-    class="relative flex shrink-0 justify-between items-center bg-[#051B31] text-white font-semibold shadow-[0_3px_4px_0px_rgba(0,0,0,0.29)] overflow-hidden"
+    class="relative flex shrink-0 justify-between items-center bg-[#051B31] text-white font-semibold shadow-[0_0.1875rem_0.25rem_0_rgba(0,0,0,0.29)] overflow-hidden"
 >
     <img
         class="pointer-events-none absolute inset-y-0 left-0 h-full w-auto"
@@ -110,7 +110,7 @@
                 {/if}
             </div>
         </div>
-        <div class="border-x-2 px-3 py-1.5">
+        <div class="border-x-[0.125rem] px-3 py-1.5">
             <div class="flex flex-col items-center">
                 <div class="text-2xl">{temp} &deg;{unit}</div>
                 <div class="flex flex-row gap-2 text-sm">

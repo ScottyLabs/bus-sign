@@ -82,7 +82,7 @@
             <div class="inline-flex flex-col justify-start items-start">
                 <div class="inline-flex justify-start items-center gap-3">
                     <div
-                        class="justify-start text-black text-5xl font-bold leading-[56px]"
+                        class="justify-start text-black text-5xl font-bold leading-[3.5rem]"
                     >
                         {title}
                     </div>
@@ -94,7 +94,7 @@
                     >
                         Stop #{stopId}
                     </div>
-                    <div class="w-[3px] h-7 shrink-0 bg-light-gray"></div>
+                    <div class="w-[0.1875rem] h-7 shrink-0 bg-light-gray"></div>
                     <div class="justify-start text-xl font-semibold leading-7">
                         <span class="text-gray"
                             >{walkMins} mins walk near

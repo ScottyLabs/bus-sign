@@ -15,6 +15,11 @@ main {
   font-family: "Open Sans", sans-serif;
 }
 
+/* scale with the display */
+html {
+  font-size: min(calc(100vw / 120), calc(100vh / 67.5));
+}
+
 @theme {
   --color-red: #c4213e;
   --color-yellow: #ffb100;
