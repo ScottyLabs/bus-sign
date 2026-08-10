@@ -67,11 +67,13 @@
 
     const formatClock = (now: Date) => {
         date = now.toLocaleDateString("en-US", {
+            timeZone: "America/New_York",
             month: "2-digit",
             day: "2-digit",
             year: "2-digit",
         });
         time = now.toLocaleTimeString("en-US", {
+            timeZone: "America/New_York",
             hour: "numeric",
             minute: "2-digit",
         });
@@ -79,6 +81,7 @@
 
     const formatLastUpdated = (now: Date) =>
         now.toLocaleTimeString("en-US", {
+            timeZone: "America/New_York",
             hour: "numeric",
             minute: "2-digit",
         });

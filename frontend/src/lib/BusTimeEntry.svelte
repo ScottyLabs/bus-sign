@@ -30,6 +30,7 @@
     const formatClock = (seconds: number): string => {
         const arrival = new Date(Date.now() + seconds * 1000);
         return arrival.toLocaleTimeString("en-US", {
+            timeZone: "America/New_York",
             hour: "numeric",
             minute: "2-digit",
         });
