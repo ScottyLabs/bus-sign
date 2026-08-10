@@ -11,7 +11,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     scottylabs = {
-      url = "git+https://codeberg.org/ScottyLabs/kennel";
+      url = "git+https://git.cmu.dev/ScottyLabs/kennel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

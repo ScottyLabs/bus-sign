@@ -13,7 +13,13 @@
 Secrets are managed with secretspec. Authenticate once per machine with:
 
 ```bash
-nix run git+https://codeberg.org/ScottyLabs/kennel#login
+nix run git+https://git.cmu.dev/ScottyLabs/kennel#login
+```
+
+For per-developer API keys, copy the example env file and fill in your keys:
+
+```bash
+cp .env.example .env
 ```
 
 Allow devenv, or enter the shell if already allowed:
