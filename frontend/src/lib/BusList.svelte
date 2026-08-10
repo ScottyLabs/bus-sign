@@ -9,7 +9,6 @@
     type RouteInformation = {
         route: string;
         destination: string;
-        scheduled?: boolean;
         arrivals: {
             bus_id: string;
             capacity: string;
@@ -17,20 +16,64 @@
         }[];
     };
 
+    // type MajorRoute = { route: string; minutes: number };
+
     export let title: string;
     export let direction: "inbound" | "outbound";
     export let stopId: string;
     export let walkMins: number;
     export let near: string;
-    export let nextMajorRoutes: { route: string; minutes: number }[];
     export let entries: RouteInformation[];
+
+    // /** How many arrivals fit in the main column before overflow goes to major routes. */
+    // const MAIN_DISPLAY_LIMIT = 6;
+    // const PINNED_MAJOR_ROUTE = "28X";
+    // const MAJOR_ROTATE_MS = 7_000;
 
     const arrows: Record<"inbound" | "outbound", Component> = {
         inbound: ArrowLeft,
         outbound: ArrowRight,
     };
 
+    // let rotateIndex = 0;
+
+    // const toMajorRoute = (entry: RouteInformation): MajorRoute => ({
+    //     route: entry.route,
+    //     minutes: Math.max(
+    //         1,
+    //         Math.ceil((entry.arrivals[0]?.seconds ?? 0) / 60),
+    //     ),
+    // });
+
     $: Arrow = arrows[direction];
+    // $: mainEntries = entries.slice(0, MAIN_DISPLAY_LIMIT);
+    // $: overflowEntries = entries.slice(MAIN_DISPLAY_LIMIT);
+
+    // $: pinnedMajor = (() => {
+    //     const entry = entries.find((e) => e.route === PINNED_MAJOR_ROUTE);
+    //     return entry ? toMajorRoute(entry) : null;
+    // })();
+
+    // $: rotatePool = overflowEntries.filter(
+    //     (e) => e.route !== PINNED_MAJOR_ROUTE,
+    // );
+
+    // $: rotatingMajor =
+    //     rotatePool.length > 0
+    //         ? toMajorRoute(rotatePool[rotateIndex % rotatePool.length])
+    //         : null;
+
+    // $: nextMajorRoutes = [pinnedMajor, rotatingMajor].filter(
+    //     (r): r is MajorRoute => r != null,
+    // );
+
+    // onMount(() => {
+    //     const interval = setInterval(() => {
+    //         if (rotatePool.length === 0) return;
+    //         rotateIndex = (rotateIndex + 1) % rotatePool.length;
+    //     }, MAJOR_ROTATE_MS);
+    //     return () => clearInterval(interval);
+    // });
 </script>
 
 <div class="flex flex-1 min-w-0 flex-col gap-9">
@@ -59,6 +102,7 @@
                     </div>
                 </div>
             </div>
+            <!--
             <div class="inline-flex flex-col justify-start items-end gap-1">
                 <div class="justify-start text-black text-xl font-semibold">
                     Next major routes
@@ -73,13 +117,14 @@
                     {/each}
                 </div>
             </div>
+            -->
         </div>
         <div class="self-stretch h-1 bg-red"></div>
     </div>
     <div
         class="self-stretch flex flex-col justify-start items-start gap-5 overflow-hidden min-h-0"
     >
-        {#each entries as entry (entry.route)}
+        {#each entries as entry (`${entry.route}:${entry.destination}`)}
             <div
                 class="self-stretch"
                 animate:flip={{ duration: 400 }}
@@ -89,7 +134,6 @@
                     route={entry.route}
                     destination={entry.destination}
                     arrivals={entry.arrivals}
-                    scheduled={entry.scheduled ?? false}
                 />
             </div>
         {/each}

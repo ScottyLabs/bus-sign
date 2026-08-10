@@ -7,12 +7,15 @@
     type RouteInformation = {
         route: string;
         destination: string;
-        scheduled?: boolean;
         arrivals: {
             bus_id: string;
             capacity: string;
             seconds: number;
         }[];
+    };
+
+    type PredictionsApiResponse = {
+        [stopId: string]: RouteInformation[];
     };
 
     type WeatherApiResponse = {
@@ -34,100 +37,14 @@
     };
 
     const API_BASE = import.meta.env.VITE_API_BASE || "";
+    const PREDICTIONS_REFRESH_MS = 3_000;
     const WEATHER_REFRESH_MS = 60_000;
-    const MOCK_TICK_MS = 2_000;
-    const MOCK_TICK_SECONDS = 45;
 
-    let inboundEntries: RouteInformation[] = [
-        {
-            route: "61B",
-            destination: "Braddock-Swissvale to Downtown",
-            arrivals: [{ bus_id: "1201", capacity: "EMPTY", seconds: 20 }],
-        },
-        {
-            route: "67",
-            destination: "Forbes Hospital",
-            scheduled: true,
-            arrivals: [{ bus_id: "2401", capacity: "EMPTY", seconds: 420 }],
-        },
-        {
-            route: "28X",
-            destination: "Pittsburgh International Airport",
-            arrivals: [
-                { bus_id: "2801", capacity: "HALF_EMPTY", seconds: 720 },
-            ],
-        },
-        {
-            route: "61A",
-            destination: "North Braddock to Downtown",
-            arrivals: [{ bus_id: "1101", capacity: "EMPTY", seconds: 780 }],
-        },
-        {
-            route: "61D",
-            destination: "Murray Short to Oakland",
-            arrivals: [{ bus_id: "1401", capacity: "FULL", seconds: 1020 }],
-        },
-        {
-            route: "61C",
-            destination: "McKeesport Homestead to Downtown",
-            arrivals: [{ bus_id: "1301", capacity: "FULL", seconds: 1020 }],
-        },
-    ];
+    const INBOUND_STOP = "4407";
+    const OUTBOUND_STOP = "7117";
 
-    let outboundEntries: RouteInformation[] = [
-        {
-            route: "61D",
-            destination: "Murray Short to Waterfront",
-            arrivals: [{ bus_id: "1402", capacity: "FULL", seconds: 120 }],
-        },
-        {
-            route: "61A",
-            destination: "North Braddock Via Braddock Hills Shopping Center",
-            arrivals: [{ bus_id: "1102", capacity: "FULL", seconds: 900 }],
-        },
-        {
-            route: "67",
-            destination: "Forbes Ave Opposite Craig St",
-            scheduled: true,
-            arrivals: [
-                { bus_id: "2402", capacity: "HALF_EMPTY", seconds: 420 },
-            ],
-        },
-    ];
-
-    const sortByArrival = (entries: RouteInformation[]) =>
-        [...entries].sort(
-            (a, b) =>
-                (a.arrivals[0]?.seconds ?? Infinity) -
-                (b.arrivals[0]?.seconds ?? Infinity),
-        );
-
-    const tickMockEntries = (entries: RouteInformation[]) => {
-        const next = entries.map((entry) => ({
-            ...entry,
-            arrivals: entry.arrivals.map((arrival) => {
-                let seconds = arrival.seconds - MOCK_TICK_SECONDS;
-                if (seconds <= 0) {
-                    seconds = 480 + Math.floor(Math.random() * 720);
-                }
-                return { ...arrival, seconds };
-            }),
-        }));
-
-        // Occasionally pull a later bus forward so rows swap mid-list
-        if (Math.random() < 0.45 && next.length > 1) {
-            const i = 1 + Math.floor(Math.random() * (next.length - 1));
-            const arrival = next[i].arrivals[0];
-            if (arrival) {
-                arrival.seconds = Math.max(
-                    15,
-                    arrival.seconds - 150 - Math.floor(Math.random() * 240),
-                );
-            }
-        }
-
-        return sortByArrival(next);
-    };
+    let inboundEntries: RouteInformation[] = [];
+    let outboundEntries: RouteInformation[] = [];
 
     let weather: Weather = {
         icon: "01d",
@@ -140,6 +57,13 @@
     let date = "";
     let time = "";
     let lastUpdated = "";
+
+    const sortByArrival = (entries: RouteInformation[]) =>
+        [...entries].sort(
+            (a, b) =>
+                (a.arrivals[0]?.seconds ?? Infinity) -
+                (b.arrivals[0]?.seconds ?? Infinity),
+        );
 
     const formatClock = (now: Date) => {
         date = now.toLocaleDateString("en-US", {
@@ -158,6 +82,18 @@
             hour: "numeric",
             minute: "2-digit",
         });
+
+    const fetchPredictions = async (): Promise<PredictionsApiResponse> => {
+        const response = await fetch(`${API_BASE}/predictions`, {
+            cache: "no-store",
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch predictions: ${response.status}`);
+        }
+
+        return (await response.json()) as PredictionsApiResponse;
+    };
 
     const fetchWeather = async (): Promise<Weather> => {
         const response = await fetch(`${API_BASE}/weather`, {
@@ -179,6 +115,17 @@
         };
     };
 
+    const refreshPredictions = async () => {
+        try {
+            const data = await fetchPredictions();
+            inboundEntries = sortByArrival(data[INBOUND_STOP] ?? []);
+            outboundEntries = sortByArrival(data[OUTBOUND_STOP] ?? []);
+            lastUpdated = formatLastUpdated(new Date());
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const refreshWeather = async () => {
         try {
             weather = await fetchWeather();
@@ -188,25 +135,21 @@
     };
 
     onMount(() => {
-        const now = new Date();
-        formatClock(now);
-        lastUpdated = formatLastUpdated(now);
+        formatClock(new Date());
+        void refreshPredictions();
         void refreshWeather();
-        inboundEntries = sortByArrival(inboundEntries);
-        outboundEntries = sortByArrival(outboundEntries);
 
+        const predictionsInterval = setInterval(
+            refreshPredictions,
+            PREDICTIONS_REFRESH_MS,
+        );
         const weatherInterval = setInterval(refreshWeather, WEATHER_REFRESH_MS);
         const clockInterval = setInterval(() => formatClock(new Date()), 1_000);
-        const mockInterval = setInterval(() => {
-            inboundEntries = tickMockEntries(inboundEntries);
-            outboundEntries = tickMockEntries(outboundEntries);
-            lastUpdated = formatLastUpdated(new Date());
-        }, MOCK_TICK_MS);
 
         return () => {
+            clearInterval(predictionsInterval);
             clearInterval(weatherInterval);
             clearInterval(clockInterval);
-            clearInterval(mockInterval);
         };
     });
 </script>
@@ -228,26 +171,18 @@
         <BusList
             title="Inbound"
             direction="inbound"
-            stopId="4407"
+            stopId={INBOUND_STOP}
             walkMins={5}
             near="Tepper"
-            nextMajorRoutes={[
-                { route: "28X", minutes: 50 },
-                { route: "58", minutes: 65 },
-            ]}
             entries={inboundEntries}
         />
         <div class="w-1 shrink-0 bg-light-gray"></div>
         <BusList
             title="Outbound"
             direction="outbound"
-            stopId="7117"
+            stopId={OUTBOUND_STOP}
             walkMins={3}
             near="the UC"
-            nextMajorRoutes={[
-                { route: "28X", minutes: 40 },
-                { route: "69", minutes: 35 },
-            ]}
             entries={outboundEntries}
         />
     </div>
