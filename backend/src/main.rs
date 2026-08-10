@@ -16,7 +16,9 @@ use tower_http::services::{ServeDir, ServeFile};
 async fn main() {
     dotenvy::dotenv().ok();
 
-    let api_key = env::var("PRT_API_KEY").expect("PRT_API_KEY must be set");
+    let prt_api_key = env::var("PRT_API_KEY").expect("PRT_API_KEY must be set");
+    let openweather_api_key =
+        env::var("OPENWEATHER_API_KEY").expect("OPENWEATHER_API_KEY must be set");
 
     let host: IpAddr = env::var("HOST")
         .unwrap_or_else(|_| "127.0.0.1".to_string())
@@ -28,7 +30,7 @@ async fn main() {
         .parse()
         .expect("PORT must be a valid port number");
 
-    let state = AppState::new(api_key);
+    let state = AppState::new(prt_api_key, openweather_api_key);
     let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any);
     let router = create_router(state).layer(cors);
 

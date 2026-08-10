@@ -4,6 +4,7 @@
 
 - [devenv](https://devenv.sh/getting-started/) - provides Cargo, Deno, and other tooling via Nix
 - PRT API Key - Obtained from creating a TrueTime account [here](https://realtime.portauthority.org/bustime/createAccount.jsp)
+- OpenWeather API Key - Obtained from [OpenWeatherMap](https://openweathermap.org/api) (Current Weather + 5 Day / 3 Hour Forecast)
 
 ## Setup
 
