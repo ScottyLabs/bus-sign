@@ -4,6 +4,7 @@
 //! OpenWeatherMap, serving cleaned data to:
 //! - `GET /predictions`
 //! - `GET /weather`
+//! - `GET /api/health`
 //!
 //! Stale cache mechanisms are in place to respect upstream rate limits.
 
@@ -537,11 +538,17 @@ fn title_case(s: &str) -> String {
         .join(" ")
 }
 
+/// Liveness probe: returns 200 when the process is up.
+async fn get_health() -> StatusCode {
+    StatusCode::OK
+}
+
 /// Constructs the Axum router and attaches the application state.
 pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/predictions", get(get_predictions))
         .route("/weather", get(get_weather))
+        .route("/api/health", get(get_health))
         .with_state(state)
 }
 
