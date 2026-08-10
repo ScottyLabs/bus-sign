@@ -54,39 +54,47 @@
 
     $: isAirport = route === "28X";
 
-    $: routeColor =
-        variant === "delayed"
-            ? "text-gray"
-            : isAirport
-              ? "text-blue"
-              : "text-black";
+    $: routeColor = scheduled
+        ? "text-gray"
+        : isAirport
+          ? "text-blue"
+          : "text-black";
 
     $: timeColor =
-        variant === "coming"
-            ? "text-red"
-            : variant === "delayed"
+        scheduled && variant === "coming"
+            ? "text-black"
+            : scheduled
               ? "text-gray"
-              : "text-black";
+              : variant === "coming"
+                ? "text-red"
+                : "text-black";
 
     $: rowClass =
-        variant === "coming"
+        !scheduled && variant === "coming"
             ? "bg-red/10"
-            : variant === "soon"
+            : !scheduled && variant === "soon"
               ? "bg-yellow/20"
-              : "";
+              : "bg-transparent";
 
     $: dividerClass =
-        variant === "coming"
+        !scheduled && variant === "coming"
             ? "border-b-3 border-red"
-            : variant === "soon"
+            : !scheduled && variant === "soon"
               ? "border-b-3 border-yellow"
               : "border-b-2 border-light-gray";
+
+    $: insetClass =
+        !scheduled && (variant === "coming" || variant === "soon")
+            ? "px-4"
+            : "mx-4";
 </script>
 
-<div class="self-stretch pb-1.5 {rowClass} {dividerClass}">
+<div
+    class="self-stretch pb-1.5 transition-colors duration-500 {insetClass} {rowClass} {dividerClass}"
+>
     <div class="self-stretch flex items-center">
-        <div class="w-3/4 flex justify-between items-center gap-x-4">
-            <div class="flex flex-1 flex-col justify-start items-start">
+        <div class="w-3/4 flex justify-between items-center gap-x-4 min-w-0">
+            <div class="flex flex-1 flex-col justify-start items-start min-w-0">
                 <div
                     class="inline-flex justify-start items-center {scheduled
                         ? 'gap-4'
@@ -98,7 +106,7 @@
                         {route}
                     </div>
                     {#if isAirport && !scheduled}
-                        <Plane class="size-8 {routeColor}" />
+                        <Plane class="size-8 shrink-0 {routeColor}" />
                     {/if}
                     {#if scheduled}
                         <div
@@ -108,9 +116,7 @@
                         </div>
                     {/if}
                 </div>
-                <div
-                    class="max-w-full truncate text-xl font-semibold {routeColor}"
-                >
+                <div class="w-full truncate text-xl font-semibold {routeColor}">
                     {destination}
                 </div>
             </div>

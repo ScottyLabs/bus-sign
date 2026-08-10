@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { Component } from "svelte";
+    import { flip } from "svelte/animate";
+    import { slide } from "svelte/transition";
     import ArrowLeft from "~icons/lucide/arrow-left";
     import ArrowRight from "~icons/lucide/arrow-right";
     import BusTimeEntry from "./BusTimeEntry.svelte";
@@ -65,7 +67,9 @@
                     class="text-right justify-start text-gray text-xl font-medium leading-7"
                 >
                     {#each nextMajorRoutes as major, i}
-                        {#if i > 0}<br />{/if}{major.route} in {major.minutes} min
+                        {#if i > 0}<br />{/if}<span class="text-black"
+                            >{major.route}</span
+                        > in {major.minutes} min
                     {/each}
                 </div>
             </div>
@@ -73,15 +77,21 @@
         <div class="self-stretch h-1 bg-red"></div>
     </div>
     <div
-        class="self-stretch flex flex-col justify-start items-start gap-5 overflow-y-auto min-h-0"
+        class="self-stretch flex flex-col justify-start items-start gap-5 overflow-hidden min-h-0"
     >
-        {#each entries as entry}
-            <BusTimeEntry
-                route={entry.route}
-                destination={entry.destination}
-                arrivals={entry.arrivals}
-                scheduled={entry.scheduled ?? false}
-            />
+        {#each entries as entry (entry.route)}
+            <div
+                class="self-stretch"
+                animate:flip={{ duration: 400 }}
+                transition:slide={{ duration: 300 }}
+            >
+                <BusTimeEntry
+                    route={entry.route}
+                    destination={entry.destination}
+                    arrivals={entry.arrivals}
+                    scheduled={entry.scheduled ?? false}
+                />
+            </div>
         {/each}
     </div>
 </div>
