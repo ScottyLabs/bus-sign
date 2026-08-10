@@ -90,7 +90,7 @@
 </script>
 
 <div
-    class="self-stretch pb-1.5 transition-colors duration-500 {insetClass} {rowClass} {dividerClass}"
+    class="self-stretch pt-3 pb-1.5 transition-colors duration-500 {insetClass} {rowClass} {dividerClass}"
 >
     <div class="self-stretch flex items-center">
         <div class="w-3/4 flex justify-between items-center gap-x-4 min-w-0">
