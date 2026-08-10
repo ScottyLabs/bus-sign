@@ -1,6 +1,6 @@
 secretspec:
   enable: true
-  provider: vault://secrets.scottylabs.org/secret
+  profile: dev
 
 inputs:
   nixpkgs:
