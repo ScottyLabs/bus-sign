@@ -82,7 +82,7 @@
             <div class="inline-flex flex-col justify-start items-start">
                 <div class="inline-flex justify-start items-center gap-3">
                     <div
-                        class="justify-start text-black text-5xl font-bold leading-[3.5rem]"
+                        class="justify-start text-black text-5xl font-extrabold leading-[3.5rem]"
                     >
                         {title}
                     </div>
