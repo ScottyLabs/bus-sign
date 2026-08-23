@@ -47,7 +47,7 @@
     let outboundEntries: RouteInformation[] = [];
 
     let weather: Weather = {
-        icon: "01d",
+        icon: "",
         condition: "-",
         conditionUntil: "",
         tempF: 0,

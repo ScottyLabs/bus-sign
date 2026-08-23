@@ -56,7 +56,7 @@
 
     const toC = (f: number) => Math.round(((f - 32) * 5) / 9);
 
-    $: WeatherIcon = weatherIcons[icon] ?? WiNa;
+    $: WeatherIcon = icon ? (weatherIcons[icon] ?? WiNa) : null;
     $: temp = unit === "F" ? tempF : toC(tempF);
     $: high = unit === "F" ? highF : toC(highF);
     $: low = unit === "F" ? lowF : toC(lowF);
@@ -102,7 +102,9 @@
     </div>
     <div class="relative z-10 flex flex-row items-center my-4.5 mr-14">
         <div class="flex flex-row items-center pr-4.5">
-            <WeatherIcon class="size-14 shrink-0 text-white m-2" />
+            {#if WeatherIcon}
+                <WeatherIcon class="size-14 shrink-0 text-white m-2" />
+            {/if}
             <div class="gap-1">
                 <div class="text-2xl">{condition}</div>
                 {#if conditionUntil}
