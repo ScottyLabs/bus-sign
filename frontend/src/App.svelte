@@ -175,7 +175,7 @@
             title="Inbound"
             direction="inbound"
             stopId={INBOUND_STOP}
-            walkMins={5}
+            walkMins={3}
             near="Tepper"
             entries={inboundEntries}
         />
@@ -184,7 +184,7 @@
             title="Outbound"
             direction="outbound"
             stopId={OUTBOUND_STOP}
-            walkMins={3}
+            walkMins={1}
             near="the UC"
             entries={outboundEntries}
         />
