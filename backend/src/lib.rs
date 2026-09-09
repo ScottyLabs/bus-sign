@@ -553,14 +553,12 @@ pub fn create_router(state: AppState) -> Router {
 }
 
 /// Linearly decreases predicted arrival times based on how much real time has elapsed.
-/// Stops subtracting if the bus is extremely close (under 30s) to prevent negative times.
+/// Clamps at zero to prevent negative times.
 fn adjust_cached_times(data: &mut FrontendResponse, elapsed_seconds: i64) {
     for route_groups in data.values_mut() {
         for group in route_groups {
             for arrival in &mut group.arrivals {
-                if arrival.seconds > 30 {
-                    arrival.seconds -= elapsed_seconds;
-                }
+                arrival.seconds = (arrival.seconds - elapsed_seconds).max(0);
             }
         }
     }
