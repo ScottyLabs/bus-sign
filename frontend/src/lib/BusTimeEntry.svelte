@@ -1,5 +1,6 @@
 <script lang="ts">
     import Plane from "~icons/lucide/plane";
+    import { formatMinutes } from "./arrival";
 
     export let route: string;
     export let destination: string;
@@ -19,12 +20,6 @@
         EMPTY: { label: "Empty", icon: "/empty.svg" },
         HALF_EMPTY: { label: "Moderate", icon: "/moderate.svg" },
         FULL: { label: "Busy", icon: "/busy.svg" },
-    };
-
-    const formatMinutes = (seconds: number): string => {
-        if (seconds < 60) return "NOW";
-        const minutes = Math.ceil(seconds / 60);
-        return `${minutes} min`;
     };
 
     const formatClock = (seconds: number): string => {

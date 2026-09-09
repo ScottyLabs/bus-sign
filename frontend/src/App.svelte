@@ -3,6 +3,7 @@
     import Header from "./lib/Header.svelte";
     import Footer from "./lib/Footer.svelte";
     import BusList from "./lib/BusList.svelte";
+    import { arrivalBucket } from "./lib/arrival";
 
     type RouteInformation = {
         route: string;
@@ -58,11 +59,17 @@
     let time = "";
     let lastUpdated = "";
 
+    const nextBucket = (entry: RouteInformation): number => {
+        const next = entry.arrivals[0];
+        return next ? arrivalBucket(next.seconds) : Number.MAX_SAFE_INTEGER;
+    };
+
     const sortByArrival = (entries: RouteInformation[]) =>
         [...entries].sort(
             (a, b) =>
-                (a.arrivals[0]?.seconds ?? Infinity) -
-                (b.arrivals[0]?.seconds ?? Infinity),
+                nextBucket(a) - nextBucket(b) ||
+                a.route.localeCompare(b.route, "en", { numeric: true }) ||
+                a.destination.localeCompare(b.destination),
         );
 
     const formatClock = (now: Date) => {
