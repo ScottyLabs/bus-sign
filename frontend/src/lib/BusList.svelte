@@ -82,11 +82,11 @@
             <div class="inline-flex flex-col justify-start items-start">
                 <div class="inline-flex justify-start items-center gap-3">
                     <div
-                        class="justify-start text-black text-5xl font-extrabold leading-[3.5rem]"
+                        class="justify-start text-black text-[3.25rem] font-extrabold leading-[3.5rem]"
                     >
                         {title}
                     </div>
-                    <Arrow class="size-9 shrink-0" />
+                    <Arrow class="size-12 [&>path]:stroke-[2.5] shrink-0" />
                 </div>
                 <div class="flex justify-start items-center gap-2">
                     <div
@@ -98,7 +98,9 @@
                     <div class="justify-start text-xl font-semibold leading-7">
                         <span class="text-gray"
                             >{walkMins} mins walk near
-                        </span>{" "}<span class="text-black">{near}</span>
+                        </span>{" "}<span class="text-black font-bold"
+                            >{near}</span
+                        >
                     </div>
                 </div>
             </div>

@@ -65,6 +65,8 @@
                 ? "text-red"
                 : "text-black";
 
+    $: clockColor = variant === "coming" ? "text-red" : "text-gray";
+
     $: rowClass =
         !scheduled && variant === "coming"
             ? "bg-red/10"
@@ -120,7 +122,7 @@
             <div class="w-14 flex flex-col items-center gap-1.5 pt-2.5">
                 {#if capacity}
                     <img src={capacity.icon} alt="" class="h-9 w-auto" />
-                    <div class="text-gray">
+                    <div class="text-gray font-semibold">
                         {capacity.label}
                     </div>
                 {/if}
@@ -133,7 +135,7 @@
             </div>
             {#if clockDisplay}
                 <div
-                    class="text-right text-xl font-semibold leading-5 {timeColor}"
+                    class="text-right text-xl font-semibold leading-5 {clockColor}"
                 >
                     {clockDisplay}
                 </div>
