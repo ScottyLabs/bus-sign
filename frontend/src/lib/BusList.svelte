@@ -2,8 +2,8 @@
     import type { Component } from "svelte";
     import { flip } from "svelte/animate";
     import { slide } from "svelte/transition";
-    import ArrowLeft from "~icons/lucide/arrow-left";
-    import ArrowRight from "~icons/lucide/arrow-right";
+    import ArrowUp from "~icons/lucide/arrow-up";
+    import ArrowDown from "~icons/lucide/arrow-down";
     import BusTimeEntry from "./BusTimeEntry.svelte";
 
     type RouteInformation = {
@@ -31,8 +31,8 @@
     // const MAJOR_ROTATE_MS = 7_000;
 
     const arrows: Record<"inbound" | "outbound", Component> = {
-        inbound: ArrowLeft,
-        outbound: ArrowRight,
+        inbound: ArrowUp,
+        outbound: ArrowDown,
     };
 
     // let rotateIndex = 0;
