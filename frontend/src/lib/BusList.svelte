@@ -121,7 +121,7 @@
             </div>
             -->
         </div>
-        <div class="self-stretch h-1 bg-red"></div>
+        <div class="self-stretch h-1 bg-red-border"></div>
     </div>
     <div
         class="self-stretch flex flex-col justify-start items-start gap-5 overflow-hidden min-h-0"

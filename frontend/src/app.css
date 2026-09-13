@@ -21,8 +21,10 @@ html {
 }
 
 @theme {
-  --color-red: #c4213e;
-  --color-yellow: #fef7e6;
+  --color-red-border: #d70029;
+  --color-red-bg: #fae0e5;
+  --color-yellow-border: #fef7e6;
+  --color-yellow-bg: #ffb100;
   --color-green: #0d923b;
   --color-blue: #007dc5;
   --color-gray: #6d6e71;

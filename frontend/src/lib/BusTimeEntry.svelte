@@ -69,16 +69,16 @@
 
     $: rowClass =
         !scheduled && variant === "coming"
-            ? "bg-red/10"
+            ? "bg-red-bg"
             : !scheduled && variant === "soon"
-              ? "bg-yellow/20"
+              ? "bg-yellow-bg"
               : "bg-transparent";
 
     $: dividerClass =
         !scheduled && variant === "coming"
-            ? "border-b-[0.1875rem] border-red"
+            ? "border-b-[0.1875rem] border-red-border"
             : !scheduled && variant === "soon"
-              ? "border-b-[0.1875rem] border-yellow"
+              ? "border-b-[0.1875rem] border-yellow-border"
               : "border-b-[0.125rem] border-light-gray";
 
     $: insetClass =
