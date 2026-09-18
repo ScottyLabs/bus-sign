@@ -17,11 +17,18 @@ use axum::{
 };
 use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, LazyLock},
+};
 use tokio::sync::Mutex;
 
 /// Base URL for PRT Truetime API.
 const BASE_URL: &str = "http://truetime.portauthority.org/bustime/api/v3";
+/// Inbound stop ID (toward downtown / inner terminus).
+const INBOUND_STOP: &str = "4407";
+/// Outbound stop ID (toward outer terminus).
+const OUTBOUND_STOP: &str = "7117";
 /// Comma-separated list of stop IDs to query.
 const STOPS: &str = "4407,7117";
 /// Resolution of predicted time data ('s' for seconds).
@@ -39,6 +46,41 @@ const WEATHER_LAT: f64 = 40.443_3;
 const WEATHER_LON: f64 = -79.942_8;
 /// Time (s) between weather cache refreshes.
 const WEATHER_CACHE_DURATION_SECONDS: i64 = 600;
+
+/// Direction-specific corridor labels (`SRC to DEST`) for a route.
+struct CorridorNames {
+    inbound: String,
+    outbound: String,
+}
+
+/// Endpoints `[inbound_terminus, outbound_terminus]` from `routes.toml`, expanded into
+/// corridor labels keyed by route designator.
+static ROUTE_NAMES: LazyLock<HashMap<String, CorridorNames>> = LazyLock::new(|| {
+    let endpoints: HashMap<String, [String; 2]> =
+        toml::from_str(include_str!("../routes.toml")).expect("routes.toml must be valid TOML");
+    endpoints
+        .into_iter()
+        .map(|(route, [inner, outer])| {
+            (
+                route,
+                CorridorNames {
+                    inbound: format!("{outer} to {inner}"),
+                    outbound: format!("{inner} to {outer}"),
+                },
+            )
+        })
+        .collect()
+});
+
+/// Looks up a route's corridor name for the given stop (`SRC to DEST` in travel direction).
+fn route_name(route: &str, stpid: &str) -> Option<&'static str> {
+    let names = ROUTE_NAMES.get(route)?;
+    match stpid {
+        INBOUND_STOP => Some(names.inbound.as_str()),
+        OUTBOUND_STOP => Some(names.outbound.as_str()),
+        _ => None,
+    }
+}
 
 /// Global application state, shared across all HTTP requests.
 #[derive(Clone)]
@@ -197,6 +239,9 @@ struct OwmForecastItem {
 struct RouteGroup {
     /// Route number/name (e.g. "61A").
     route: String,
+    /// Corridor name in the bus's travel direction (e.g. "Downtown to North Braddock").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    route_name: Option<&'static str>,
     /// Final destination (e.g. "North Braddock").
     destination: String,
     /// A list of upcoming arrivals for this specific route and destination.
@@ -337,6 +382,7 @@ async fn get_predictions(
                 _ => continue, // skip prediction if time format is bad
             };
 
+            let name = route_name(&p.rt, &p.stpid);
             let stop_list = output.entry(p.stpid).or_default();
 
             let arrival = BusArrival {
@@ -353,6 +399,7 @@ async fn get_predictions(
                 group.arrivals.sort_by_key(|b| b.seconds);
             } else {
                 stop_list.push(RouteGroup {
+                    route_name: name,
                     route: p.rt,
                     destination: p.des,
                     arrivals: vec![arrival],

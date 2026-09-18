@@ -1,0 +1,9 @@
+# [inbound_terminus, outbound_terminus] for each route serving the CUC stops.
+"28X" = ["Downtown and Oakland", "Pittsburgh International Airport"]
+"58" = ["Downtown", "Carnegie Mellon"]
+"61A" = ["Downtown", "Braddock Hills Shopping Center"]
+"61B" = ["Downtown", "Braddock Hills Shopping Center"]
+"61C" = ["Downtown", "McKeesport"]
+"61D" = ["Oakland", "Waterfront"]
+"67" = ["Downtown", "Forbes Hospital"]
+"69" = ["Wilkinsburg", "Trafford"]
