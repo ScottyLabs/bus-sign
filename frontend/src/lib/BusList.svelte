@@ -5,6 +5,7 @@
     import ArrowUp from "~icons/lucide/arrow-up";
     import ArrowDown from "~icons/lucide/arrow-down";
     import BusTimeEntry from "./BusTimeEntry.svelte";
+    import { ROLL_MS, rollIn, rollOut } from "./transitions";
 
     type RouteInformation = {
         route: string;
@@ -124,19 +125,24 @@
         <div class="self-stretch h-1 bg-red-border"></div>
     </div>
     <div
-        class="self-stretch flex flex-col justify-start items-start gap-5 overflow-hidden min-h-0"
+        class="self-stretch flex flex-col justify-start items-start overflow-hidden min-h-0"
     >
         {#each entries as entry (`${entry.route}:${entry.destination}`)}
             <div
-                class="self-stretch"
-                animate:flip={{ duration: 400 }}
-                transition:slide={{ duration: 300 }}
+                class="self-stretch mb-5"
+                animate:flip={{ duration: ROLL_MS }}
+                transition:slide={{ duration: ROLL_MS }}
             >
-                <BusTimeEntry
-                    route={entry.route}
-                    destination={entry.destination}
-                    arrivals={entry.arrivals}
-                />
+                <div
+                    in:rollIn={{ duration: ROLL_MS }}
+                    out:rollOut={{ duration: ROLL_MS }}
+                >
+                    <BusTimeEntry
+                        route={entry.route}
+                        destination={entry.destination}
+                        arrivals={entry.arrivals}
+                    />
+                </div>
             </div>
         {/each}
     </div>
