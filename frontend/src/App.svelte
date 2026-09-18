@@ -3,7 +3,10 @@
     import Header from "./lib/Header.svelte";
     import Footer from "./lib/Footer.svelte";
     import BusList from "./lib/BusList.svelte";
-    import { arrivalBucket } from "./lib/arrival";
+    import {
+        type ArrivalOrderTracker,
+        sortByArrival,
+    } from "./lib/arrival";
 
     type RouteInformation = {
         route: string;
@@ -46,6 +49,8 @@
 
     let inboundEntries: RouteInformation[] = [];
     let outboundEntries: RouteInformation[] = [];
+    let inboundOrder: ArrivalOrderTracker = new Map();
+    let outboundOrder: ArrivalOrderTracker = new Map();
 
     let weather: Weather = {
         icon: "",
@@ -58,19 +63,6 @@
     let date = "";
     let time = "";
     let lastUpdated = "";
-
-    const nextBucket = (entry: RouteInformation): number => {
-        const next = entry.arrivals[0];
-        return next ? arrivalBucket(next.seconds) : Number.MAX_SAFE_INTEGER;
-    };
-
-    const sortByArrival = (entries: RouteInformation[]) =>
-        [...entries].sort(
-            (a, b) =>
-                nextBucket(a) - nextBucket(b) ||
-                a.route.localeCompare(b.route, "en", { numeric: true }) ||
-                a.destination.localeCompare(b.destination),
-        );
 
     const formatClock = (now: Date) => {
         date = now.toLocaleDateString("en-US", {
@@ -128,8 +120,18 @@
     const refreshPredictions = async () => {
         try {
             const data = await fetchPredictions();
-            inboundEntries = sortByArrival(data[INBOUND_STOP] ?? []);
-            outboundEntries = sortByArrival(data[OUTBOUND_STOP] ?? []);
+            const inbound = sortByArrival(
+                data[INBOUND_STOP] ?? [],
+                inboundOrder,
+            );
+            const outbound = sortByArrival(
+                data[OUTBOUND_STOP] ?? [],
+                outboundOrder,
+            );
+            inboundEntries = inbound.sorted;
+            outboundEntries = outbound.sorted;
+            inboundOrder = inbound.order;
+            outboundOrder = outbound.order;
             lastUpdated = formatLastUpdated(new Date());
         } catch (error) {
             console.error(error);
