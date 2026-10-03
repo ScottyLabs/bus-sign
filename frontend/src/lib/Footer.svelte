@@ -18,8 +18,14 @@
             alt="ScottyLabs Logo"
         />
         <div>
-            Made by ScottyLabs in collaboration with the Undergraduate Student
-            Senate
+            Made by 
+            <a href="https://scottylabs.org/" class="text-blue-500 hover:underline">
+                ScottyLabs
+            </a>
+            in collaboration with the 
+            <a href="https://www.cmu.edu/stugov/senate/" class="text-blue-500 hover:underline">
+                Undergraduate Student Senate
+            </a>
         </div>
     </div>
 </div>
