@@ -9,21 +9,21 @@
 //! Stale cache mechanisms are in place to respect upstream rate limits.
 
 use axum::{
-    Json, Router,
+    Json, Query, Router,
     extract::State,
-    http::StatusCode,
+    http::{StatusCode, response},
     response::{IntoResponse, Response},
     routing::get,
 };
 use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::Mutex;
+use std::{collections::HashMap, hash::Hash, sync::Arc};
+use tokio::{sync::Mutex, time::error::Elapsed};
 
 /// Base URL for PRT Truetime API.
 const BASE_URL: &str = "http://truetime.portauthority.org/bustime/api/v3";
 /// Comma-separated list of stop IDs to query.
-const STOPS: &str = "4407,7117";
+// const STOPS: &str = "4407,7117";
 /// Resolution of predicted time data ('s' for seconds).
 const TIME_RES: &str = "s";
 /// Specific feed name required by PRT API.
@@ -58,7 +58,6 @@ impl AppState {
             openweather_api_key,
             client: reqwest::Client::new(),
             cache: Arc::new(Mutex::new(Cache {
-                last_update: None,
                 data: HashMap::new(),
             })),
             weather_cache: Arc::new(Mutex::new(WeatherCache {
@@ -69,10 +68,15 @@ impl AppState {
     }
 }
 
+/// Stores last update time for each RouteGroup
+struct CacheEntry {
+    data: Vec<RouteGroup>,
+    last_update: Option<DateTime<Utc>>,
+}
+
 /// Stores the most recent successful predictions response and its timestamp.
 struct Cache {
-    last_update: Option<DateTime<Utc>>,
-    data: FrontendResponse,
+    data: HashMap<String, CacheEntry>,
 }
 
 /// Stores the most recent successful weather response and its timestamp.
@@ -110,6 +114,12 @@ impl IntoResponse for AppError {
         };
         (status, Json(serde_json::json!({ "error": error_message }))).into_response()
     }
+}
+
+// Struct for deserializing stops parameter in /predictions
+#[derive(Deserialize, Debug)]
+struct PredictionsQuery {
+    stops: String,
 }
 
 // --- INCOMING DATA (From PRT API) ---
@@ -248,31 +258,46 @@ struct WeatherResponse {
 /// or returns an API-level error *and* no cache is available to fall back on.
 async fn get_predictions(
     State(state): State<AppState>,
+    Query(params): Query<PredictionsQuery>,
 ) -> Result<Json<FrontendResponse>, AppError> {
-    // 1. check cache first
+    let mut response_data = FrontendResponse::new();
+    let mut missing_stops = Vec::new();
+
     {
         let cache = state.cache.lock().await;
-        if let Some(last_update) = cache.last_update {
-            let now = Utc::now();
-            let elapsed = now.signed_duration_since(last_update);
-            if elapsed < Duration::seconds(CACHE_DURATION_SECONDS) {
-                println!("Returning cached data");
+        for stop_id in params.stops.split(',') {
+            if let Some(entry) = cache.data.get(stop_id) {
+                if let Some(last_update) = entry.last_update {
+                    let now = Utc::now();
+                    let elapsed = now.signed_duration_since(last_update);
 
-                let mut response_data = cache.data.clone();
-                let elapsed_seconds = elapsed.num_seconds();
+                    if elapsed < Duration::seconds(CACHE_DURATION_SECONDS) {
+                        let mut routes = entry.data.clone();
+                        let elapsed_seconds = elapsed.num_seconds();
 
-                adjust_cached_times(&mut response_data, elapsed_seconds);
-
-                return Ok(Json(response_data));
+                        adjust_cached_times(&mut routes, elapsed_seconds);
+                        response_data.insert(stop_id.to_string(), routes);
+                        continue;
+                    }
+                }
             }
+
+            missing_stops.push(stop_id.to_string());
         }
     }
+
+    if missing_stops.is_empty() {
+        println!("Returning cached data");
+        return Ok(Json(response_data));
+    }
+
+    let stops_param = missing_stops.join(",");
 
     // 2. fetch new data from API
     println!("Fetching from API");
     let url = format!(
         "{}/getpredictions?key={}&stpid={}&tmres={}&rtpidatafeed={}&format=json",
-        BASE_URL, state.prt_api_key, STOPS, TIME_RES, FEED_NAME
+        BASE_URL, state.prt_api_key, stops_param, TIME_RES, FEED_NAME
     );
 
     let resp = state
@@ -298,27 +323,47 @@ async fn get_predictions(
         eprintln!("PRT API Error Message: {}", combined_msg);
 
         let mut cache = state.cache.lock().await;
+        let mut no_cache = false;
 
         // STALE CACHE FALLBACK LOGIC -
         // if API returns an error but we have old data, send the old data anyway
         // so the physical sign doesn't go blank
-        if let Some(last_update) = cache.last_update {
-            eprintln!("API failed, falling back to stale cache data");
+        for stop_id in &missing_stops {
+            if let Some(entry) = cache.data.get_mut(stop_id) {
+                let now: DateTime<Utc> = Utc::now();
 
-            let now = Utc::now();
-            let elapsed_seconds = now.signed_duration_since(last_update).num_seconds();
+                if let Some(last_update) = entry.last_update {
+                    eprintln!(
+                        "API failed, falling back to stale cache data for stop {}",
+                        stop_id
+                    );
+                    let elapsed_seconds = now.signed_duration_since(last_update).num_seconds();
 
-            // update actual cache data here so that next cache pull doesn't use old data
-            adjust_cached_times(&mut cache.data, elapsed_seconds);
+                    adjust_cached_times(&mut entry.data, elapsed_seconds);
+                    entry.last_update = Some(now);
+                    response_data.insert(stop_id.clone(), entry.data.clone());
+                }
+            } else {
+                // no cache exists for this stop (return err and insert new empty entry)
+                no_cache = true;
 
-            // update timestamp and return Ok (with stale data)
-            cache.last_update = Some(now);
-            return Ok(Json(cache.data.clone()));
+                cache.data.insert(
+                    stop_id.clone(),
+                    CacheEntry {
+                        data: Vec::new(),
+                        last_update: Some(now),
+                    },
+                );
+            }
         }
 
-        // if no cache exists yet, update timestamp to avoid API spam and return Err
-        cache.last_update = Some(Utc::now());
-        return Err(AppError::PrtApi(combined_msg));
+        // If any one of the stops doesn't exist in the cache, return error
+        if no_cache {
+            return Err(AppError::PrtApi(combined_msg));
+        }
+
+        // If all stops exist, return the response
+        return Ok(Json(response_data));
     }
 
     // 4. parse API data into frontend format
@@ -364,11 +409,23 @@ async fn get_predictions(
     // 5. update cache
     {
         let mut cache = state.cache.lock().await;
-        cache.data = output.clone();
-        cache.last_update = Some(Utc::now());
+        let now = Utc::now();
+
+        for (stop_id, routes) in &output {
+            cache.data.insert(
+                stop_id.clone(),
+                CacheEntry {
+                    data: routes.clone(),
+                    last_update: Some(now),
+                },
+            );
+        }
     }
 
-    Ok(Json(output))
+    // Merge response_data with output
+    response_data.extend(output);
+
+    Ok(Json(response_data))
 }
 
 /// Handler for the `GET /weather` route.
@@ -554,12 +611,10 @@ pub fn create_router(state: AppState) -> Router {
 
 /// Linearly decreases predicted arrival times based on how much real time has elapsed.
 /// Clamps at zero to prevent negative times.
-fn adjust_cached_times(data: &mut FrontendResponse, elapsed_seconds: i64) {
-    for route_groups in data.values_mut() {
-        for group in route_groups {
-            for arrival in &mut group.arrivals {
-                arrival.seconds = (arrival.seconds - elapsed_seconds).max(0);
-            }
+fn adjust_cached_times(data: &mut Vec<RouteGroup>, elapsed_seconds: i64) {
+    for group in data {
+        for arrival in &mut group.arrivals {
+            arrival.seconds = (arrival.seconds - elapsed_seconds).max(0);
         }
     }
 }
