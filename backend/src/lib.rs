@@ -269,11 +269,11 @@ async fn get_predictions(
     }
 
     // 2. fetch new data from API
-    println!("Fetching from API");
     let url = format!(
         "{}/getpredictions?key={}&stpid={}&tmres={}&rtpidatafeed={}&format=json",
         BASE_URL, state.prt_api_key, STOPS, TIME_RES, FEED_NAME
     );
+    println!("Fetching from {url}");
 
     let resp = state
         .client
