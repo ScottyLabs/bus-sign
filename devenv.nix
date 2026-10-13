@@ -7,7 +7,10 @@
     enable = true;
     project.name = "bus-sign";
     rust.enable = true;
-    deno.enable = true;
+    deno = {
+      enable = true;
+      dirs = [ "frontend" ];
+    };
     secrets.enable = true;
     kennel.services.backend = {
       customDomain = "bus-sign.scottylabs.org";
