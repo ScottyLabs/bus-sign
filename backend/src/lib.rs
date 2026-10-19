@@ -28,6 +28,8 @@ const STOPS: &str = "4407,7117";
 const TIME_RES: &str = "s";
 /// Specific feed name required by PRT API.
 const FEED_NAME: &str = "Port Authority Bus";
+/// Error message PRT returns when no buses are predicted.
+const NO_ARRIVALS_MSG: &str = "No arrival times";
 
 /// Time (s) between prediction cache refreshes.
 const CACHE_DURATION_SECONDS: i64 = 20;
@@ -288,7 +290,15 @@ async fn get_predictions(
     let prt_data: PrtResponse = serde_json::from_str(&clean_text).map_err(AppError::Json)?;
 
     // 3. handle PRT errors
-    if let Some(errors) = prt_data.response.api_error {
+    let errors: Vec<PrtError> = prt_data
+        .response
+        .api_error
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|e| e.msg != NO_ARRIVALS_MSG)
+        .collect();
+
+    if !errors.is_empty() {
         let combined_msg = errors
             .into_iter()
             .map(|e| e.msg)
