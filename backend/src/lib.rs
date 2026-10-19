@@ -33,6 +33,8 @@ const NO_ARRIVALS_MSG: &str = "No arrival times";
 
 /// Time (s) between prediction cache refreshes.
 const CACHE_DURATION_SECONDS: i64 = 20;
+/// Max age (s) of the last successful fetch before stale data is cleared.
+const MAX_STALE_SECONDS: i64 = 120;
 
 /// OpenWeather Current Weather + 5 Day / 3 Hour Forecast base URL.
 const OPENWEATHER_BASE_URL: &str = "https://api.openweathermap.org/data/2.5";
@@ -61,6 +63,7 @@ impl AppState {
             client: reqwest::Client::new(),
             cache: Arc::new(Mutex::new(Cache {
                 last_update: None,
+                last_success: None,
                 data: HashMap::new(),
             })),
             weather_cache: Arc::new(Mutex::new(WeatherCache {
@@ -74,6 +77,7 @@ impl AppState {
 /// Stores the most recent successful predictions response and its timestamp.
 struct Cache {
     last_update: Option<DateTime<Utc>>,
+    last_success: Option<DateTime<Utc>>,
     data: FrontendResponse,
 }
 
@@ -244,6 +248,8 @@ struct WeatherResponse {
 /// while linearly subtracting the elapsed time from the arrival predictions.
 /// If the cache is stale, it queries the PRT API. If the API fails, it falls back to the
 /// stale cache to prevent the bus sign from blanking out during minor network drops.
+/// Once the last successful fetch is over `MAX_STALE_SECONDS` old, the stale data is
+/// cleared so the sign doesn't show old buses during a long outage.
 ///
 /// ## Errors
 /// Returns an `AppError` if the upstream API fails to connect, returns bad JSON,
@@ -321,6 +327,14 @@ async fn get_predictions(
             // update actual cache data here so that next cache pull doesn't use old data
             adjust_cached_times(&mut cache.data, elapsed_seconds);
 
+            // clear the data once it's too old
+            if cache.last_success.is_some_and(|t| {
+                now.signed_duration_since(t) > Duration::seconds(MAX_STALE_SECONDS)
+            }) {
+                eprintln!("Stale cache older than {MAX_STALE_SECONDS}s, clearing");
+                cache.data.clear();
+            }
+
             // update timestamp and return Ok (with stale data)
             cache.last_update = Some(now);
             return Ok(Json(cache.data.clone()));
@@ -374,8 +388,10 @@ async fn get_predictions(
     // 5. update cache
     {
         let mut cache = state.cache.lock().await;
+        let now = Utc::now();
         cache.data = output.clone();
-        cache.last_update = Some(Utc::now());
+        cache.last_update = Some(now);
+        cache.last_success = Some(now);
     }
 
     Ok(Json(output))
