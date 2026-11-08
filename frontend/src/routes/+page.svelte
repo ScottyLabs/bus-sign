@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import Header from "./lib/Header.svelte";
-    import Footer from "./lib/Footer.svelte";
-    import BusList from "./lib/BusList.svelte";
-    import { arrivalBucket } from "./lib/arrival";
+    import Header from "$lib/Header.svelte";
+    import Footer from "$lib/Footer.svelte";
+    import BusList from "$lib/BusList.svelte";
+    import { arrivalBucket } from "$lib/arrival";
 
     type RouteInformation = {
         route: string;
@@ -37,7 +37,6 @@
         lowF: number;
     };
 
-    const API_BASE = import.meta.env.VITE_API_BASE || "";
     const PREDICTIONS_REFRESH_MS = 3_000;
     const WEATHER_REFRESH_MS = 60_000;
 
@@ -94,7 +93,7 @@
         });
 
     const fetchPredictions = async (): Promise<PredictionsApiResponse> => {
-        const response = await fetch(`${API_BASE}/predictions`, {
+        const response = await fetch("/predictions", {
             cache: "no-store",
         });
 
@@ -106,7 +105,7 @@
     };
 
     const fetchWeather = async (): Promise<Weather> => {
-        const response = await fetch(`${API_BASE}/weather`, {
+        const response = await fetch("/weather", {
             cache: "no-store",
         });
 

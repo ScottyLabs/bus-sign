@@ -4,33 +4,15 @@ A real-time bus sign that displays Pittsburgh Regional Transit (PRT) arrivals fo
 
 Visit the online bus sign at https://bus-sign.scottylabs.org!
 
-## Prerequisites
-
-- Be a member of [Community-Based Projects](https://git.cmu.dev/ScottyLabs/governance/src/branch/main/data/teams/cbp.toml)
-- [devenv](https://devenv.sh/getting-started/) - provides Cargo, Deno, and other tooling via Nix
-
 ## Setup
 
-### Secrets
+Install Lix by following kennel's [local development guide](https://docs.kennel.scottylabs.org/guides/local-development/#installing-nix), then log in to OpenBao as described in its [secrets guide](https://docs.kennel.scottylabs.org/guides/secrets/#local-development). The PRT and OpenWeather API keys are stored there, so you need to be on the [Community-Based Projects](https://git.cmu.dev/ScottyLabs/governance/src/branch/main/data/teams/cbp.yaml) team, which you can [join through governance](https://git.cmu.dev/ScottyLabs/governance#joining-a-team).
 
-The PRT and OpenWeather API keys are loaded from OpenBao by secretspec. Authenticate once per machine with:
-
-```bash
-nix run git+https://git.cmu.dev/ScottyLabs/kennel#login
-```
-
-Allow devenv, or enter the shell if already allowed:
+Enter the dev shell and start the backend on :8080 and the frontend on :5173:
 
 ```bash
-devenv allow
-# or: devenv shell
-```
-
-### Running
-
-```bash
-# Starts the backend on :8080 and the frontend on :5173
-devenv up
+nix develop
+pitchfork start --local
 ```
 
 Visit the frontend at http://127.0.0.1:5173/!

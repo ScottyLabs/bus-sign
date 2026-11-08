@@ -1,16 +1,7 @@
-# Nix / devenv
-.devenv/
-.devenv.flake.nix
+# Nix
 .pre-commit-config.yaml
 result
 result-*
-
-# AI
-.mcp.json
-.claude
-
-# direnv
-.direnv/
 
 # Rust
 target/
@@ -18,7 +9,6 @@ target/
 
 # Deno / Node
 node_modules/
-dist/
 
 # Environment
 .env

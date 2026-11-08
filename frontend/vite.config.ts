@@ -1,10 +1,14 @@
-import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import Icons from "unplugin-icons/vite";
 import { defineConfig } from "vite";
 
-// https://vite.dev/config/
 export default defineConfig({
-  envDir: "../",
-  plugins: [tailwindcss(), svelte(), Icons({ compiler: "svelte" })],
+  plugins: [tailwindcss(), sveltekit(), Icons({ compiler: "svelte" })],
+  server: {
+    proxy: {
+      "/predictions": "http://localhost:8080",
+      "/weather": "http://localhost:8080",
+    },
+  },
 });

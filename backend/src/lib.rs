@@ -244,12 +244,9 @@ struct WeatherResponse {
 
 /// Handler for the `GET /predictions` route.
 ///
-/// If valid cached data exists (less than `CACHE_DURATION_SECONDS` old), it returns the cache
-/// while linearly subtracting the elapsed time from the arrival predictions.
-/// If the cache is stale, it queries the PRT API. If the API fails, it falls back to the
-/// stale cache to prevent the bus sign from blanking out during minor network drops.
-/// Once the last successful fetch is over `MAX_STALE_SECONDS` old, the stale data is
-/// cleared so the sign doesn't show old buses during a long outage.
+/// If valid cached data exists (less than `CACHE_DURATION_SECONDS` old), it returns the cache while linearly subtracting the elapsed time from the arrival predictions.
+/// If the cache is stale, it queries the PRT API. If the API fails, it falls back to the stale cache to prevent the bus sign from blanking out during minor network drops.
+/// Once the last successful fetch is over `MAX_STALE_SECONDS` old, the stale data is cleared so the sign doesn't show old buses during a long outage.
 ///
 /// ## Errors
 /// Returns an `AppError` if the upstream API fails to connect, returns bad JSON,
@@ -315,9 +312,7 @@ async fn get_predictions(
 
         let mut cache = state.cache.lock().await;
 
-        // STALE CACHE FALLBACK LOGIC -
-        // if API returns an error but we have old data, send the old data anyway
-        // so the physical sign doesn't go blank
+        // STALE CACHE FALLBACK LOGIC - if API returns an error but we have old data, send the old data anyway so the physical sign doesn't go blank
         if let Some(last_update) = cache.last_update {
             eprintln!("API failed, falling back to stale cache data");
 

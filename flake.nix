@@ -9,57 +9,55 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    scottylabs = {
-      url = "git+https://git.cmu.dev/ScottyLabs/kennel";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    scottylabs.url = "git+https://git.cmu.dev/ScottyLabs/kennel";
+    nixpkgs.follows = "scottylabs/nixpkgs";
+    flake-parts.follows = "scottylabs/flake-parts";
   };
 
   outputs =
-    {
-      nixpkgs,
-      scottylabs,
-      ...
-    }:
-    let
-      forAllSystems = nixpkgs.lib.genAttrs [
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ inputs.scottylabs.flakeModules.default ];
+      systems = [
         "x86_64-linux"
         "aarch64-linux"
+        "aarch64-darwin"
       ];
-    in
-    {
-      packages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          helpers = scottylabs.mkLib pkgs;
 
+      perSystem =
+        { helpers, ... }:
+        let
           frontend = helpers.buildDenoTask {
             src = ./frontend;
-            pname = "frontend";
-            task = "build";
-          };
-
-          backend = helpers.buildRustService {
-            src = ./.;
-            pname = "backend";
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-            buildArgs = {
-              cargoExtraArgs = "-p backend";
-              postInstall = ''
-                mkdir -p $out/share/bus-sign/www
-                cp -r ${frontend}/* $out/share/bus-sign/www/
-                chmod -R u+w $out/share/bus-sign/www
-                wrapProgram $out/bin/backend \
-                  --set-default STATIC_DIR $out/share/bus-sign/www
-              '';
-            };
+            pname = "bus-sign-frontend";
+            output = "build";
           };
         in
         {
-          inherit frontend backend;
-        }
-      );
+          scottylabs = {
+            project.name = "bus-sign";
+            rust.enable = true;
+            deno = {
+              enable = true;
+              svelte.enable = true;
+              dirs = [ "frontend" ];
+            };
+
+            processes = {
+              backend.run = "secretspec run -- cargo run -p backend";
+              frontend.run = "cd frontend && deno task dev";
+            };
+          };
+
+          services.backend = {
+            package = helpers.buildRustService {
+              src = ./.;
+              pname = "backend";
+              buildArgs.cargoExtraArgs = "--locked -p backend";
+            };
+            customDomain = "bus-sign.scottylabs.org";
+            env.STATIC_DIR = "${frontend}";
+          };
+        };
     };
 }
