@@ -24,6 +24,8 @@
     export let walkMins: number;
     export let near: string;
     export let entries: RouteInformation[];
+    export let qrSrc: string | undefined = undefined;
+    export let qrLabel: string | undefined = undefined;
 
     // /** How many arrivals fit in the main column before overflow goes to major routes. */
     // const MAIN_DISPLAY_LIMIT = 6;
@@ -120,6 +122,22 @@
                 </div>
             </div>
             -->
+            {#if qrSrc}
+                <div class="flex shrink-0 items-center gap-3">
+                    {#if qrLabel}
+                        <div
+                            class="max-w-[7rem] text-right text-black text-xl font-semibold"
+                        >
+                            {qrLabel}
+                        </div>
+                    {/if}
+                    <img
+                        class="size-[5.25rem] shrink-0"
+                        src={qrSrc}
+                        alt={qrLabel ?? "QR code"}
+                    />
+                </div>
+            {/if}
         </div>
         <div class="self-stretch h-1 bg-red-border"></div>
     </div>

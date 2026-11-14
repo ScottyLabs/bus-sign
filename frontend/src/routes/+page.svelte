@@ -193,6 +193,8 @@
             walkMins={1}
             near="the UC"
             entries={outboundEntries}
+            qrSrc="/feedback-qr.png"
+            qrLabel="Share your feedback"
         />
     </div>
     <Footer {lastUpdated} />
